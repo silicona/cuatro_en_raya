@@ -1,0 +1,84 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-size: 18px;
+}
+body header {
+  margin: 2em;
+}
+body header h1 {
+  padding-left: 1em;
+}
+body footer {
+  padding: 1em;
+  text-align: center;
+  background-color: #efefef;
+  margin-top: 2em;
+}
+
+#contenedor {
+  width: 800px;
+  margin: 0 auto;
+}
+#contenedor::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+#contenedor #tablero {
+  float: left;
+  border-radius: 7px;
+}
+#contenedor #tablero::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+#contenedor #tablero .columna {
+  background-color: #1c20e7;
+  float: left;
+}
+#contenedor #tablero .columna .celda {
+  padding: 2ex;
+}
+#contenedor #tablero .columna .celda .token {
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  width: 70px;
+  height: 70px;
+  background-color: #ffffff;
+}
+#contenedor #tablero .columna .celda .token.H {
+  background-color: #93c572;
+}
+#contenedor #tablero .columna .celda .token.M {
+  background-color: #ffbf00;
+}
+#contenedor #tablero .columna .id_col {
+  padding: 1em;
+  text-align: center;
+  color: #ffffff;
+}
+#contenedor #controles {
+  /*width: 250px;*/
+  padding: 1em;
+  float: left;
+}
+#contenedor #controles .botones button {
+  padding: 0.3em 0.6em;
+  font-size: 1.2em;
+}
+#contenedor #controles .resp {
+  display: none;
+  margin: 0.7em 0;
+  padding: 0.3em;
+  border: 4px double #293133;
+  min-width: 100%;
+  min-height: 50px;
+}
+
+/*# sourceMappingURL=cuatro.css.map */
