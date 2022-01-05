@@ -19,7 +19,7 @@
 		<div id="contenedor">
 
 			<div id="tablero">
-				<div class="columna">
+				<div id="col1" data-id="1" class="columna">
 					<div class="celda">
 						<div class="token" id="3"></div>
 					</div>
@@ -34,7 +34,7 @@
 					</div>
 					<div class="id_col">1</div>
 				</div>
-				<div class="columna">
+				<div id="col2" data-id="2" class="columna">
 					<div class="celda">
 						<div class="token" id="7"></div>
 					</div>
@@ -49,7 +49,7 @@
 					</div>
 					<div class="id_col">2</div>
 				</div>
-				<div class="columna">
+				<div id="col3" data-id="3" class="columna">
 					<div class="celda">
 						<div class="token" id="11"></div>
 					</div>
@@ -64,7 +64,7 @@
 					</div>
 					<div class="id_col">3</div>
 				</div>
-				<div class="columna">
+				<div id="col4" data-id="4" class="columna">
 					<div class="celda">
 						<div class="token" id="15"></div>
 					</div>
@@ -83,7 +83,10 @@
 
 			<div id="controles">
 				<div class="botones">
-					<button id="btn_iniciar">Iniciar</button>
+					<button id="btn_iniciar">Juego automático</button>
+					<!-- <br><br> -->
+					&emsp;
+					<button id="btn_iniciar_partida">Iniciar partida</button>
 				</div>
 
 				<div class="resp" id="resp"></div>

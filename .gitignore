@@ -1,0 +1,4 @@
+test/vendor
+test/composer.lock
+
+.DS_store

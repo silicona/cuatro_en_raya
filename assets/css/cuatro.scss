@@ -1,3 +1,9 @@
+$ancho_tk: 70px;
+
+$antracita: #293133;
+$azul: #1c20e7;
+$pistacho: #93c572;
+$oro: #ffbf00;
 
 @mixin clearfix {
 	&::after {
@@ -7,12 +13,9 @@
 	}
 }
 
-$ancho_tk: 70px;
-
-$antracita: #293133;
-$azul: #1c20e7;
-$pistacho: #93c572;
-$oro: #ffbf00;
+@keyframes animado {
+	50% { background-color: white }
+}
 
 * {
 	box-sizing: border-box;
@@ -43,20 +46,27 @@ body {
 #contenedor {
 
 	@include clearfix;
-	width: 800px;
+	width: 900px;
 	margin: 0 auto;
-
 
 	#tablero {
 
 		@include clearfix;
 		float: left;
 		border-radius: 7px;
+		background-color: $azul;
 
 		.columna {
 			
 			background-color: $azul;
 			float: left;
+			margin: .5ex;
+			border: 2px solid transparent;
+			transition: border .6s;
+
+			&.activa:hover {
+				border-color: white;
+			}
 
 			.celda {
 
@@ -76,6 +86,10 @@ body {
 					&.M {
 						background-color: $oro;
 					}
+
+					&.animado {
+						animation: animado 2s infinite
+					}
 				}
 			}
 
@@ -89,8 +103,8 @@ body {
 
 	#controles {
 
-		/*width: 250px;*/
 		padding: 1em;
+		padding-bottom: 0;
 		float: left;
 
 		.botones {
@@ -106,8 +120,10 @@ body {
 			padding: .3em;
 			border: 4px double $antracita;
 			min-width: 100%;
-			
 			min-height: 50px;
+			max-width: 303px;
+			max-height: 390px;
+			overflow: auto;
 		}
 	}
 
