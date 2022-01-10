@@ -12,6 +12,36 @@ class CuatroTest extends TestCase
   public function setUp(): void
   {
     $this->cuatro = new Cuatro();
+    $this->mem_play_d = [ // Diagonal 0-0->3-3
+      ['', '', '', '', '', '', '', '', '', '', '', '', 2, '', '', ''], [1, '', '', '', '', '', '', '', '', '', '', '', 2, '', '', ''],
+      [1, '', '', '', '', '', '', '', '', '', '', '', 2, 2, '', ''], [1, '', '', '', '', '', '', '', '', '', '', '', 2, 2, 1, ''],
+      [1, '', '', '', '', '', '', '', 2, '', '', '', 2, 2, 1, ''], [1, '', '', '', '', '', '', '', 2, 1, '', '', 2, 2, 1, ''],
+      [1, '', '', '', 2, '', '', '', 2, 1, '', '', 2, 2, 1, ''], [1, 1, '', '', 2, '', '', '', 2, 1, '', '', 2, 2, 1, ''],
+      [1, 1, 2, '', 2, '', '', '', 2, 1, '', '', 2, 2, 1, ''], [1, 1, 2, '', 2, '', '', '', 2, 1, '', '', 2, 2, 1, 1],
+      [1, 1, 2, 2, 2, '', '', '', 2, 1, '', '', 2, 2, 1, 1], [1, 1, 2, 2, 2, '', '', '', 2, 1, 1, '', 2, 2, 1, 1],
+      [1, 1, 2, 2, 2, '', '', '', 2, 1, 1, 2, 2, 2, 1, 1], [1, 1, 2, 2, 2, 1, '', '', 2, 1, 1, 2, 2, 2, 1, 1]
+    ];
+    $this->mem_play_v = [ // Vertical 0-0->0-4
+      [1, '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''], [1, '', '', '', 2, '', '', '', '', '', '', '', '', '', '', ''],
+      [1, 1, '', '', 2, '', '', '', '', '', '', '', '', '', '', ''], [1, 1, '', '', 2, '', '', '', '', '', '', '', 2, '', '', ''],
+      [1, 1, 1, '', 2, '', '', '', '', '', '', '', 2, '', '', ''], [1, 1, 1, '', 2, 2, '', '', '', '', '', '', 2, '', '', ''],
+      [1, 1, 1, 1, 2, 2, '', '', '', '', '', '', 2, '', '', '']
+    ];
+    // $this->mem_play_d = [ // Diagonal 0-0->3-3
+    //   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
+    //   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 0],
+    //   [1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 2, 2, 1, 0], [1, 0, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 2, 2, 1, 0],
+    //   [1, 0, 0, 0, 2, 0, 0, 0, 2, 1, 0, 0, 2, 2, 1, 0], [1, 1, 0, 0, 2, 0, 0, 0, 2, 1, 0, 0, 2, 2, 1, 0],
+    //   [1, 1, 2, 0, 2, 0, 0, 0, 2, 1, 0, 0, 2, 2, 1, 0], [1, 1, 2, 0, 2, 0, 0, 0, 2, 1, 0, 0, 2, 2, 1, 1],
+    //   [1, 1, 2, 2, 2, 0, 0, 0, 2, 1, 0, 0, 2, 2, 1, 1], [1, 1, 2, 2, 2, 0, 0, 0, 2, 1, 1, 0, 2, 2, 1, 1],
+    //   [1, 1, 2, 2, 2, 0, 0, 0, 2, 1, 1, 2, 2, 2, 1, 1], [1, 1, 2, 2, 2, 1, 0, 0, 2, 1, 1, 2, 2, 2, 1, 1]
+    // ];
+    // $this->mem_play_v = [ // Vertical 0-0->0-4
+    //   [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    //   [1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
+    //   [1, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0], [1, 1, 1, 0, 2, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
+    //   [1, 1, 1, 1, 2, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0]
+    // ];
   }
 
   public function test_anadirTokenAColumna_ok()
@@ -29,6 +59,29 @@ class CuatroTest extends TestCase
     $res = Helper::ejecutarMetodo($this->cuatro, 'anadirTokenAColumna', [3]);
     $this->assertEquals(13, $res, 'Res debería ser 13 por token insertado en columna 4');
   }
+
+  public function test_array_filter_ok()
+  {
+    $tablero = array(
+      array('H', null, null, null),
+      array('M', 'M', null, null),
+      array('H', 'H', null, null),
+      array('M', null, null, null),
+    );
+
+    $res = array_filter($tablero);
+
+    $this->assertSame(4, count($res), 'Res debería tener 4 elementos por arrays interiores');
+    $this->assertSame(4, count($res[0]), 'Res[0] debería tener 4 elementos porque array_filter no llega a los interiores');
+    $this->assertSame(['H', null, null, null], $res[0], 'Res[0] debería tener nulls porque array_filter no llega a los interiores');
+
+    $res = array_filter(array_merge(...$tablero));
+
+    $this->assertSame(6, count($res), 'Res con merge debería tener 6 elementos H o M');
+    $check = ['H', 4 => 'M', 5 => 'M', 8 => 'H', 9 => 'H', 12 => 'M'];
+    $this->assertSame($check, $res, 'Res con merge no debería tener nulls');
+  }
+
 
   public function test_anadirTokenAColumna_NoPermiteRebasarColumnaSegunMaxTokens()
   {
@@ -64,6 +117,21 @@ class CuatroTest extends TestCase
   }
 
 
+  public function test_determinarColumna_DevuelveIdColumna_IdToken()
+  {
+    $res = Helper::ejecutarMetodo($this->cuatro, 'determinarColumna', [0]);
+    $this->assertEquals($res, 0, 'Res debería ser 0 con id_token: 0');
+    
+    $res = Helper::ejecutarMetodo($this->cuatro, 'determinarColumna', [3]);
+    $this->assertEquals($res, 0, 'Res debería ser 0 con id_token: 3');
+    
+    $res = Helper::ejecutarMetodo($this->cuatro, 'determinarColumna', [14]);
+    $this->assertEquals($res, 3, 'Res debería ser 3 con id_token: 14');
+    
+    $res = Helper::ejecutarMetodo($this->cuatro, 'determinarColumna', [15]);
+    $this->assertEquals($res, 3, 'Res debería ser 3 con id_token: 15');
+  }
+
   public function test_determinarToken_DevuelveNumToken_IdColumna_Altura()
   {
     $res = Helper::ejecutarMetodo($this->cuatro, 'determinarToken', [0, 0]);
@@ -75,11 +143,10 @@ class CuatroTest extends TestCase
     $this->assertEquals($res, 10, 'Res debería ser 10 con idColumna: 2 y Altura: 2');
   }
 
-
   public function test_echarFicha_PrimerMovimientoHumano()
   {
     $tablero = array_fill(0, 16, "");
-    $res = $this->cuatro->echarFicha($tablero, 1);
+    $res = $this->cuatro->echarFicha($tablero, 1, 0);
 
     $this->assertEquals(16, count($res['tablero']), 'Tablero debería tener 16 elementos');
     $this->assertEquals('H', $res['tablero'][0], 'Tablero[0] debería ser H');
@@ -101,7 +168,7 @@ class CuatroTest extends TestCase
       array('H', 'M', 'H', 'H'),
       array('M', 'H', 'M', 'H'),
     );
-    $res = $this->cuatro->echarFicha($tablero, 1);
+    $res = $this->cuatro->echarFicha($tablero, 1, 0);
 
     $this->assertEquals(16, count($res['tablero']), 'Tablero debería tener 16 elementos');
     $this->assertEquals('H', $res['tablero'][3], 'Tablero[3] debería ser H');
@@ -379,6 +446,77 @@ class CuatroTest extends TestCase
     $this->assertFalse($res, 'Res debería ser false por derrota M');
   }
 
+  public function test_getBenderFriends_ok()
+  {
+    $nombre = 'Nombre de test';
+    $amiga = new AmigaBender($nombre);
+    $amiga->actualizarNumeros(0, 'H');
+
+    $ready = file_put_contents(AMIGAS_FILE, json_encode([$amiga->toArray()]));
+    $this->assertGreaterThan(0, $ready, 'Ready debería tener 0 bytes guardados');
+
+    $res = $this->cuatro->getBenderFriends();
+
+    $this->assertSame($nombre, $res['records'][0]['nombre']);
+
+    $this->assertSame(1, $res['tops'][$amiga->puntos][0]['victorias'], 'Debería tener 1 victoria');
+  }
+
+  public function test_getEstrategiaResacoso_InicioM_ok()
+  {
+    $ready = file_put_contents(MEM_FILE, json_encode([$this->mem_play_v, $this->mem_play_d]));
+    $this->assertGreaterThan(0, $ready, 'Ready debería tener mas de 0 bytes guardados');
+
+    //$this->dificultad = 3;
+    $this->cuatro->tablero = array(
+      array('M', null, null, null),
+      array('H', null, null, null),
+      array(null, null, null, null),
+      array(null, null, null, null),
+    );
+    
+    $res = Helper::ejecutarMetodo($this->cuatro, 'getEstrategiaResacoso', ['M']);
+    
+    $this->assertSame(0, $res, 'Res debería ser 0 por próximo movimiento de mem_play_v');
+  }
+  
+  public function test_getEstrategiaResacoso_InicioH_ok()
+  {
+    $ready = file_put_contents(MEM_FILE, json_encode([$this->mem_play_v, $this->mem_play_d]));
+    $this->assertGreaterThan(0, $ready, 'Ready debería tener mas de 0 bytes guardados');
+    
+    //$this->dificultad = 3;
+    $this->cuatro->tablero = array(
+      array('M', null, null, null),
+      array(null, null, null, null),
+      array(null, null, null, null),
+      array('H', 'H', null, null),
+    );
+
+    $res = Helper::ejecutarMetodo($this->cuatro, 'getEstrategiaResacoso', ['M']);
+
+    $this->assertSame(3, $res, 'Res debería ser 3 por próximo movimiento de mem_play_d');
+  }
+
+  public function test_getEstrategiaResacoso_InicioM_NoEligeMovesPropios()
+  {
+    $ready = file_put_contents(MEM_FILE, json_encode([$this->mem_play_v, $this->mem_play_d]));
+    $this->assertGreaterThan(0, $ready, 'Ready debería tener mas de 0 bytes guardados');
+
+    //$this->dificultad = 3;
+    $this->cuatro->tablero = array(
+      array('M', 'M', null, null),
+      array('H', null, null, null),
+      array(null, null, null, null),
+      array(null, null, null, null),
+    );
+
+    $res = Helper::ejecutarMetodo($this->cuatro, 'getEstrategiaResacoso', ['M']);
+
+    $this->assertSame(false, $res, 'Res debería ser false por próximo movimiento de mem_play_v');
+  }
+
+
   public function test_getLineaGanadora_DevuelveTriunfo()
   {
     $this->cuatro->turno_maq = false;
@@ -393,6 +531,79 @@ class CuatroTest extends TestCase
     $this->assertEquals([12, 9, 6, 3], $res, 'Res debería ser correcto');
   }
 
+
+  public function test_guardarAmistadBender_ok_GuardaNuevaAmistad()
+  {
+    $ready = file_put_contents(AMIGAS_FILE, '');
+    $this->assertSame(0, $ready, 'Ready debería tener 0 bytes guardados');
+
+    $res = Helper::ejecutarMetodo($this->cuatro, 'guardarAmistadBender', ['Nombre de test', "H"]);
+
+    $this->assertGreaterThan($ready, $res, 'Res debería tener más bytes que ready');
+
+    $check = json_decode(file_get_contents(AMIGAS_FILE));
+    $this->assertSame(1, count($check), 'Datos debería tener 1 amigo');
+    $this->assertSame('Nombre de test', $check[0]->nombre, 'Nombre debería ser correcto');
+  }
+
+  public function test_guardarAmistadBender_ok_ActualizaNuevaAmistad()
+  {
+    $amiga = new AmigaBender('Nombre de test');
+    $amiga->actualizarNumeros(0, 'H');
+
+    $ready = file_put_contents(AMIGAS_FILE, json_encode([$amiga->toArray()]));
+    $this->assertGreaterThan(0, $ready, 'Ready debería tener 0 bytes guardados');
+
+    $res = Helper::ejecutarMetodo($this->cuatro, 'guardarAmistadBender', ['Nombre de test', "M"]);
+
+    //$this->assertGreaterThan($ready, $res, 'Res debería tener más bytes que ready');
+
+    $check = json_decode(file_get_contents(AMIGAS_FILE));
+    $this->assertSame(1, count($check), 'Datos debería tener 1 amigo');
+    $this->assertSame('Nombre de test', $check[0]->nombre, 'Nombre debería ser correcto');
+    $this->assertSame(1, $check[0]->nums[0]->d, 'Debería tener derrota en dificultad 0');
+  }
+
+  public function test_guardarPartida_ok()
+  {
+    $ready = file_put_contents(MEM_FILE, json_encode([$this->mem_play_d]));
+    $this->assertGreaterThan(0, $ready, 'Ready debería tener mas de 0 bytes guardados');
+
+    $play = array();
+    foreach($this->mem_play_v as $move){
+      $arr_move = [];
+      foreach($move as $token){
+        if ($token == 1) $arr_move[] = 'M';
+        else if ($token == 2) $arr_move[] = 'H';
+				else $arr_move[] = '';
+      }
+      $play[] = $arr_move;
+    }
+
+    $res = Cuatro::guardarPartida($play, 1);
+
+    $this->assertGreaterThan($ready, $res, 'Res debería tener más bytes que ready');
+  }
+
+  public function test_guardarPartida_NoGuardaPartidaDuplicada()
+  {
+    $ready = file_put_contents(MEM_FILE, json_encode([$this->mem_play_v, $this->mem_play_d]));
+    $this->assertGreaterThan(0, $ready, 'Ready debería tener mas de 0 bytes guardados');
+    $play = array();
+    foreach($this->mem_play_v as $move){
+      $arr_move = [];
+      foreach($move as $token){
+        if ($token == 1) $arr_move[] = 'M';
+        else if ($token == 2) $arr_move[] = 'H';
+				else $arr_move[] = '';
+      }
+      $play[] = $arr_move;
+    }
+
+    $res = Cuatro::guardarPartida($play, 4, 1);
+
+    $this->assertSame($res, $ready, 'Res debería tener los mismos bytes que ready');
+  }
 
   public function test_iniciarJuegoAutomatico()
   {

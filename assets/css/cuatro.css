@@ -18,6 +18,18 @@ body header {
 body header h1 {
   padding-left: 1em;
 }
+body .fondo-verde {
+  background-color: #93c572;
+}
+body .fondo-rojo {
+  background-color: red;
+}
+body .fondo-oro {
+  background-color: #ffbf00;
+}
+body .text-center {
+  text-align: center;
+}
 body footer {
   padding: 1em;
   text-align: center;
@@ -29,17 +41,26 @@ body footer {
   width: 900px;
   margin: 0 auto;
 }
-#contenedor::after {
+#contenedor::before, #contenedor::after {
   content: "";
   display: block;
   clear: both;
+}
+#contenedor #rotulo {
+  text-align: center;
+  height: 40px;
+  line-height: 40px;
+}
+#contenedor #rotulo #op {
+  font-size: 1.2em;
+  color: red;
 }
 #contenedor #tablero {
   float: left;
   border-radius: 7px;
   background-color: #1c20e7;
 }
-#contenedor #tablero::after {
+#contenedor #tablero::before, #contenedor #tablero::after {
   content: "";
   display: block;
   clear: both;
@@ -79,13 +100,30 @@ body footer {
   color: #ffffff;
 }
 #contenedor #controles {
-  padding: 1em;
+  padding: 0 1em;
   padding-bottom: 0;
   float: left;
 }
 #contenedor #controles .botones button {
-  padding: 0.3em 0.6em;
-  font-size: 1.2em;
+  padding: 0.3ex 0.6ex;
+  font-size: 1em;
+  border-radius: 4px;
+  border: #293133 1px solid;
+}
+#contenedor #controles .botones .div_dificultad {
+  display: none;
+  margin: 0.5ex 0;
+  line-height: 1.1em;
+}
+#contenedor #controles .botones .div_dificultad select {
+  font-size: 1em;
+}
+#contenedor #controles .botones .div_dificultad select option {
+  width: 100px;
+}
+#contenedor #controles .botones .div_dificultad button {
+  padding: 0.1ex 0.6ex;
+  background-color: #ffbf00;
 }
 #contenedor #controles .resp {
   display: none;
@@ -97,6 +135,180 @@ body footer {
   max-width: 303px;
   max-height: 390px;
   overflow: auto;
+}
+#contenedor #amigas {
+  width: 100%;
+  padding-top: 1em;
+}
+#contenedor #amigas::before, #contenedor #amigas::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+#contenedor #amigas .div-amigas-list::before, #contenedor #amigas .div-amigas-list::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+#contenedor #amigas .div-amigas-list #div-tops-table {
+  margin: 0;
+  width: 500px;
+  float: left;
+}
+#contenedor #amigas .div-amigas-list #div-tops-table #tops-table {
+  width: 400px;
+}
+#contenedor #amigas .div-amigas-list #div-tops-table #tops-table th {
+  width: 50px;
+  text-align: center;
+}
+#contenedor #amigas .div-amigas-list #div-tops-table #tops-table .th-amiga {
+  width: 100px;
+}
+#contenedor #amigas .div-amigas-list .div-amigas-botones {
+  width: 300px;
+  float: left;
+}
+#contenedor #amigas .div-amigas-list .div-amigas-botones button {
+  font-size: 1.1em;
+}
+#contenedor #amigas #div-amigas-records #amigas-table {
+  margin: 1em;
+}
+#contenedor #amigas #div-amigas-records #amigas-table .th-amiga {
+  width: 100px;
+  text-align: center;
+  vertical-align: bottom;
+}
+#contenedor #amigas #div-amigas-records #amigas-table .th-nivel {
+  margin: 0 1ex;
+}
+#contenedor #amigas #div-amigas-records #amigas-table .td-record span {
+  display: inline-block;
+  width: 50px;
+  text-align: center;
+  padding-top: 4px;
+}
+#contenedor #comunidad {
+  width: 100%;
+  padding-top: 1em;
+  float: left;
+}
+#contenedor #comunidad::before, #contenedor #comunidad::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+#contenedor #comunidad #form-union {
+  font-size: 1.2em;
+  padding: 1ex;
+  margin: 0.4ex;
+  border: 3px #293133 double;
+}
+#contenedor #comunidad #form-union input {
+  font-size: inherit;
+}
+#contenedor #comunidad #form-union select {
+  font-size: inherit;
+}
+#contenedor #comunidad #form-union select option {
+  width: 150px;
+}
+#contenedor #comunidad #form-union button {
+  border-radius: 4px;
+  background-color: greenyellow;
+  font-size: inherit;
+  padding: 0.3ex 0.6ex;
+}
+#contenedor #comunidad #chat-union {
+  display: none;
+}
+#contenedor #comunidad #chat-union .logged-union {
+  font-size: 1.2em;
+  padding: 1ex;
+  margin: 0.4ex;
+  border: 3px #293133 double;
+}
+#contenedor #comunidad #chat-union .logged-union #logged-color {
+  display: inline-block;
+  height: 30px;
+  width: 50px;
+  margin-bottom: -7px;
+}
+#contenedor #comunidad .chat-wrapper, #contenedor #comunidad .listado {
+  font: bold 11px/normal "lucida grande", tahoma, verdana, arial, sans-serif;
+  background: #00a6bb;
+  padding: 20px;
+  margin: 20px auto;
+  box-shadow: 2px 2px 2px 0px #000017;
+  width: 550px;
+  float: left;
+}
+#contenedor #comunidad .chat-wrapper #message-box, #contenedor #comunidad .chat-wrapper #users, #contenedor #comunidad .listado #message-box, #contenedor #comunidad .listado #users {
+  width: 100%;
+  display: inline-block;
+  height: 300px;
+  background: #fff;
+  box-shadow: inset 0px 0px 2px #000017;
+  overflow: auto;
+  padding: 10px;
+}
+#contenedor #comunidad .chat-wrapper .user-panel, #contenedor #comunidad .listado .user-panel {
+  margin-top: 10px;
+}
+#contenedor #comunidad .chat-wrapper .user-panel input[type=text], #contenedor #comunidad .listado .user-panel input[type=text] {
+  border: none;
+  padding: 5px 5px;
+  box-shadow: 2px 2px 2px #00001c;
+}
+#contenedor #comunidad .chat-wrapper .user-panel input[type=text]#name, #contenedor #comunidad .listado .user-panel input[type=text]#name {
+  width: 20%;
+}
+#contenedor #comunidad .chat-wrapper .user-panel input[type=text]#message, #contenedor #comunidad .listado .user-panel input[type=text]#message {
+  width: 65%;
+}
+#contenedor #comunidad .chat-wrapper .user-panel button#send-message, #contenedor #comunidad .listado .user-panel button#send-message {
+  border: none;
+  padding: 5px 15px;
+  background: #11e0fb;
+  box-shadow: 2px 2px 2px #00001c;
+  float: right;
+}
+#contenedor #comunidad .listado {
+  width: 350px;
+}
+#contenedor #comunidad .listado #users {
+  margin: 0;
+}
+#contenedor #comunidad .listado #users #users-list {
+  list-style: none;
+  padding-left: 1em;
+}
+#contenedor #comunidad .listado #users li {
+  line-height: 2em;
+  border-bottom: 1px solid #293133;
+  margin: 0.2ex 0;
+}
+#contenedor #comunidad .listado #users li::before, #contenedor #comunidad .listado #users li::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+#contenedor #comunidad .listado #users li .users-botones {
+  display: block;
+  float: right;
+}
+#contenedor #comunidad .listado #users li .users-botones button {
+  margin: 0 0.3ex;
+}
+#contenedor #comunidad .listado #users li .users-botones button.accept-play {
+  background-color: green;
+}
+#contenedor #comunidad .listado #users li .users-botones button.ask-play {
+  background-color: #ffbf00;
+}
+#contenedor #comunidad .listado #users li .users-botones button.decline-play {
+  background-color: red;
 }
 
 /*# sourceMappingURL=cuatro.css.map */

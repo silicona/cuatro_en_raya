@@ -23,25 +23,28 @@ if($accion == "juego_automatico"){
 
 if($accion == "jugar_partida"){
 
-	echo json_encode($cuatro -> iniciarPartida());
-
+	//$dificultad = $_POST['dificultad'];
+	echo json_encode($cuatro -> iniciarPartida($_POST['dificultad']));
+	
 	exit;
 }
 
 if($accion == "echar_ficha"){
-
+	
 	$tablero = $_POST['tablero'];
 	$columna = $_POST['columna'];
+	$nombre = limpia_varchar($_POST['nombre']);
+	$dificultad = $_POST['dificultad'];
 
-	echo json_encode($cuatro -> echarFicha($tablero, $columna));
+	echo json_encode($cuatro -> echarFicha($tablero, $columna, $dificultad, $nombre));
 	exit;
 }
 
-if($accion == "check_socket"){
-
-	echo json_encode($cuatro -> checkSocket());
+if($accion == 'get_bender_friends'){
+	echo json_encode($cuatro->getBenderFriends());
 	exit;
 }
+
 
 echo json_encode( array(
 	'mensaje' => "Acción no reconocida"

@@ -2,15 +2,24 @@ $ancho_tk: 70px;
 
 $antracita: #293133;
 $azul: #1c20e7;
+$gris_claro: rgb(227, 227, 227);
 $pistacho: #93c572;
 $oro: #ffbf00;
+$rojo: red;
 
 @mixin clearfix {
-	&::after {
+	&::before, &::after {
 		content: '';
 		display: block;
 		clear: both;
 	}
+}
+
+@mixin button_grey {
+	padding: .3ex .6ex;
+	font-size: 1em;
+	border-radius: 4px;
+	border: $antracita 1px solid;
 }
 
 @keyframes animado {
@@ -34,6 +43,12 @@ body {
 		}
 	}
 
+	.fondo-verde { background-color: $pistacho; }
+	.fondo-rojo { background-color: $rojo; }
+	.fondo-oro { background-color: $oro; }
+
+	.text-center { text-align: center; }
+
 	footer {
 
 		padding: 1em;
@@ -48,6 +63,16 @@ body {
 	@include clearfix;
 	width: 900px;
 	margin: 0 auto;
+
+	#rotulo {
+		text-align: center;
+		height: 40px;
+		line-height: 40px;
+		#op {
+			font-size: 1.2em;
+			color: red;
+		}
+	}
 
 	#tablero {
 
@@ -103,14 +128,30 @@ body {
 
 	#controles {
 
-		padding: 1em;
+		padding: 0 1em;
 		padding-bottom: 0;
 		float: left;
 
 		.botones {
 			button {
-				padding: .3em .6em;
-				font-size: 1.2em;
+				@include button_grey;
+			}
+			.div_dificultad {
+				display: none;
+				margin: .5ex 0;
+				line-height: 1.1em;
+				select {
+					font-size: 1em;
+
+					option {
+						width: 100px;
+					}
+				}
+				button {
+					padding: .1ex .6ex;
+					background-color: $oro;
+
+				}
 			}
 		}
 
@@ -127,4 +168,203 @@ body {
 		}
 	}
 
+	#amigas {
+		@include clearfix;
+		width: 100%;
+		padding-top: 1em;
+
+		.div-amigas-list {
+			@include clearfix;
+			#div-tops-table {
+				margin: 0;
+				width: 500px;
+				float: left;
+
+				#tops-table {
+					width: 400px;
+					th {
+						width: 50px;
+						text-align: center;
+					}
+
+					.th-amiga {
+						width: 100px;
+					}
+
+				}
+			}
+
+			.div-amigas-botones {
+				width: 300px;
+				float: left;
+
+				button {
+					font-size: 1.1em;
+				}
+			}
+		}
+
+		#div-amigas-records {
+			#amigas-table {
+				margin: 1em;
+				.th-amiga {
+					width: 100px;
+					text-align: center;
+					vertical-align: bottom;
+				}
+				.th-nivel {
+					margin: 0 1ex;
+				}
+
+				.td-record {
+					span {
+						display: inline-block;
+						width: 50px;
+						text-align: center;
+						padding-top: 4px;
+					}
+
+				}
+			}
+		}
+
+		#amigas-error {
+
+		}
+	}
+
+	#comunidad {
+		@include clearfix;
+		width: 100%;
+		padding-top: 1em;
+		float: left;
+
+		#form-union {
+			font-size: 1.2em;
+			padding: 1ex;
+			margin: .4ex;
+			border: 3px $antracita double;
+
+			input {
+				font-size: inherit;
+			}
+
+			select {
+				font-size: inherit;
+				option {
+					width: 150px;
+				}
+			}
+			button {
+				border-radius: 4px;
+				background-color: greenyellow;
+				font-size: inherit;
+				padding: .3ex .6ex;
+			}
+		}
+
+		#chat-union {
+			display: none;
+			.logged-union {
+
+				font-size: 1.2em;
+				padding: 1ex;
+				margin: .4ex;
+				border: 3px $antracita double;
+
+				#logged-color {
+					display: inline-block;
+					height: 30px;
+					width: 50px;
+					margin-bottom: -7px;
+				}
+
+			}
+		}
+
+		.chat-wrapper, .listado {
+			font: bold 11px/normal 'lucida grande', tahoma, verdana, arial, sans-serif;
+			background: #00a6bb;
+			padding: 20px;
+			margin: 20px auto;
+			box-shadow: 2px 2px 2px 0px #000017;
+			width:550px;
+			float: left;
+			// max-width:700px;
+			// min-width:500px;
+		
+			#message-box, #users {
+				width: 100%;
+				display: inline-block;
+				height: 300px;
+				background: #fff;
+				box-shadow: inset 0px 0px 2px #000017;
+				overflow: auto;
+				padding: 10px;
+			}
+			.user-panel {
+				margin-top: 10px;
+		
+				input[type=text] {
+					border: none;
+					padding: 5px 5px;
+					box-shadow: 2px 2px 2px #00001c;
+					&#name {
+						width:20%;
+					}
+					&#message {
+						width:65%;
+					}
+				}
+				button#send-message {
+					border: none;
+					padding: 5px 15px;
+					background: #11e0fb;
+					box-shadow: 2px 2px 2px #00001c;
+					float: right
+				}
+			}
+		}
+
+		.listado {
+		 	width: 350px;
+			#users {
+				margin: 0;
+
+				#users-list {
+					list-style: none;
+					padding-left: 1em;
+				}
+				
+				li {
+					@include clearfix;
+					line-height: 2em;
+					border-bottom: 1px solid $antracita;
+					margin: .2ex 0;
+
+					.users-botones {
+						display: block;
+						float: right;
+						button {
+							margin: 0 .3ex;
+							
+							&.accept-play {
+								background-color: green;
+							}
+	
+							&.ask-play {
+								background-color: $oro;
+							}
+	
+							&.decline-play {
+								background-color: red;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 }
+

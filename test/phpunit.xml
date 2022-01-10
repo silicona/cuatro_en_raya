@@ -33,6 +33,10 @@
         <const name = 'BASE_URL'  value = 'http://localhost/xxxxxxxx/'/>
         <const name = 'INM_ENTORNO' value = 'pruebas' />
         -->
+        <const name = 'BASE_FILE' value = '/Applications/MAMP/htdocs/cuatro_php/'/>
+        <const name = 'MEM_FILE' value = '/Applications/MAMP/htdocs/cuatro_php/test/memoria_test.txt'/>
+        <const name = 'MEM_TEMP_FILE' value = '/Applications/MAMP/htdocs/cuatro_php/test/memoria_temp_test.txt'/>
+        <const name = 'AMIGAS_FILE' value = '/Applications/MAMP/htdocs/cuatro_php/test/memoria_amigas_test.txt'/>
     </php>
 
     <filter>
