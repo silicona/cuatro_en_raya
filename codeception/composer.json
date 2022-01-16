@@ -5,12 +5,22 @@
         "codeception/module-asserts": "^1.0.0",
         "codeception/module-webdriver": "^2.0",
         "codeception/module-rest": "^2.0",
-        "codeception/module-db": "^2.0"
+        "codeception/module-db": "^2.0",
+        "codeception/module-doctrine2": "^2.0",
+        "codeception/module-symfony": "^2.1",
+        "doctrine/orm": "^2.11",
+        "doctrine/dbal": "^3.2",
+        "symfony/cache": "^5.4"
+    },
+    "autoload": {
+        "psr-0": { "": "tests/_support/_files/doctrine/entities/" }
     },
     "scripts": {
         "test": "php vendor/bin/codecept run",
         "test:verbose": "php vendor/bin/codecept run -vv",
         "test:d": "php vendor/bin/codecept run --debug",
+        "test:bbdd": "php vendor/bin/codecept run bbdd",
+        "test:bbdd:d": "php vendor/bin/codecept run bbdd --debug",
         "test:unit": "php vendor/bin/codecept run unit",
         "test:unit:d": "php vendor/bin/codecept run unit --debug"
     }

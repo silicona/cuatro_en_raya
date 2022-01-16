@@ -10,11 +10,18 @@ class CuatroTest extends \Codeception\Test\Unit
 
   protected function _before()
   {
-    $this->cuatro = new Cuatro;
+    $this->cuatro = new Cuatro;   
   }
 
   protected function _after()
   {
+  }
+
+  public function testRecibiendoParams()
+  {
+    $this->assertMatchesRegularExpression('/memoria_test\.txt$/', $this->tester->params['mem_file'], 'Mem_file debería ser correcto');
+    
+    $this->assertSame(MEM_FILE, $this->tester->params['mem_file'], 'MEM_FILE debería ser correcto');
   }
 
   public function test_echarFicha_UltimoMovimientoHumano_Tablas()

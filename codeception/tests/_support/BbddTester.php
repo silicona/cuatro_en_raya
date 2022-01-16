@@ -23,4 +23,10 @@ class BbddTester extends \Codeception\Actor
     /**
      * Define custom actions here
      */
+    public function __construct(\Codeception\Scenario $scenario)
+    {
+        $this->scenario = $scenario;
+    
+        //$this->params = \Codeception\Configuration::suiteSettings("unit", \Codeception\Configuration::config())['params'];
+    }
 }

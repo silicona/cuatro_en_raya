@@ -2,8 +2,12 @@ actor: BbddTester
 modules:
     enabled:
         - Db:
-            dsn: 'mysql:host=localhost:8889;dbname=agenda'
-            user: 'root'
-            password: 'root'
+            dsn: "mysql:host=%host%:%port%;dbname=%dbname%"
+            user: "%dbuser%"
+            password: "%dbpassword%"
         - Asserts
         - \Helper\Bbdd
+        # - Doctrine2:
+        #     # depends: Symfony
+        #     # Call the static method `MyDb::createEntityManager()` to get the Entity Manager
+        #     connection_callback: ['CodeceptionManager', 'createEntityManager']

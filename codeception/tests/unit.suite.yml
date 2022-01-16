@@ -8,3 +8,7 @@ modules:
         - Asserts
         - \Helper\Unit
     step_decorators: ~        
+params:
+    base_file: "%BASE_FILE%"
+    mem_file: "%MEM_FILE%"
+    amigas_file: "%AMIGAS_FILE%"

@@ -1,7 +1,5 @@
 <?php
 
-use function PHPUnit\Framework\assertGreaterThan;
-
 class InitialBbddCest
 {
     public function _before(BbddTester $I)
@@ -13,7 +11,6 @@ class InitialBbddCest
         //$this->debug('jar');
     }
 
-    // tests
     public function tryToTest(BbddTester $I)
     {
         $I->seeInDatabase('contactos', ['nombre' => 'koko']);
@@ -33,5 +30,13 @@ class InitialBbddCest
     {
         $data = $I->selectAll('contactos', [], 'nombre');
         $I->assertGreaterThan(0, count($data), 'Debería tener más de 0 resultados');
+    }
+
+    public function testDoctrine(BbddTester $I)
+    {
+        // $em = $I->getModule('Doctrine2')->em;
+        // codecept_debug($em);
+        //$data = $I->selectAll('contactos', [], 'nombre');
+        //$I->assertGreaterThan(0, count($data), 'Debería tener más de 0 resultados');
     }
 }

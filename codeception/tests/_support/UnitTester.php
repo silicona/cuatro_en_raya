@@ -20,8 +20,14 @@ require_once dirname(__FILE__) . '/_files/config-test.php';
 class UnitTester extends \Codeception\Actor
 {
     use _generated\UnitTesterActions;
-
+    public $params;
     /**
      * Define custom actions here
      */
+    public function __construct(\Codeception\Scenario $scenario)
+    {
+        $this->scenario = $scenario;
+    
+        $this->params = \Codeception\Configuration::suiteSettings("unit", \Codeception\Configuration::config())['params'];
+    }
 }
