@@ -1,7 +1,5 @@
 <?php
 
-use phpDocumentor\Reflection\Types\Integer;
-
 require_once 'class.socketuser.php';
 require_once 'cuatro.php';
 class Sockeador

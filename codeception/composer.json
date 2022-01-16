@@ -6,5 +6,12 @@
         "codeception/module-webdriver": "^2.0",
         "codeception/module-rest": "^2.0",
         "codeception/module-db": "^2.0"
+    },
+    "scripts": {
+        "test": "php vendor/bin/codecept run",
+        "test:verbose": "php vendor/bin/codecept run -vv",
+        "test:d": "php vendor/bin/codecept run --debug",
+        "test:unit": "php vendor/bin/codecept run unit",
+        "test:unit:d": "php vendor/bin/codecept run unit --debug"
     }
 }

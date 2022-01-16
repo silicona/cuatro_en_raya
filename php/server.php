@@ -3,7 +3,7 @@
  * Thousand thanks to WebSocket Master http://www.sanwebe.com/2013/05/chat-using-websocket-php-socket
  * @License : http://opensource.org/licenses/MIT
  */
-
+require_once 'config.php';
 require_once 'class.sockeador.php';
 
 $socker = Sockeador::create_socket();

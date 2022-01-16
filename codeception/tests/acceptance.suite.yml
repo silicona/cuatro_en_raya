@@ -9,8 +9,12 @@ modules:
     enabled:
         - PhpBrowser:
             url: http://localhost:8888/cuatro_php
+        # Selenium necesita su servidor local selenium-standalone on
         # - WebDriver:
         #     url: http://localhost:8080/cuatro_php
         #     browser: chrome
         - \Helper\Acceptance
-step_decorators: ~        
+gherkin:
+    contexts:
+        default:
+            - \Step\Acceptance\AcceptanceSteps

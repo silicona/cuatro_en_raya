@@ -1,5 +1,5 @@
 <?php
-
+require_once 'config.php';
 require_once 'cuatro.php';
 
 function limpia_varchar($string){
