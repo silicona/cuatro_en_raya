@@ -1,4 +1,5 @@
 test/vendor
 test/composer.lock
-
+codeception/vendor
+codeception(composer.lock
 .DS_store
