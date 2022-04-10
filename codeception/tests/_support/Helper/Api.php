@@ -20,4 +20,9 @@ class Api extends \Codeception\Module
   {
     $this->assertSame($expected, $actual, $message);
   }
+
+  public function printVar($var)
+  {
+    $this->debug($var);
+  }
 }

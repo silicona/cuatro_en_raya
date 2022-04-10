@@ -17,6 +17,9 @@
     },
     "scripts": {
         "test": "php vendor/bin/codecept run",
+        "test:wip": "php vendor/bin/codecept run -g wip",
+        "gen:steps": "php vendor/bin/codecept gherkin:snippets selenium",
+        "test:steps": "php vendor/bin/codecept gherkin:steps selenium",
         "test:verbose": "php vendor/bin/codecept run -vv",
         "test:d": "php vendor/bin/codecept run --debug",
         "test:bbdd": "php vendor/bin/codecept run bbdd",

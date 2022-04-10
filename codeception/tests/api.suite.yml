@@ -2,7 +2,8 @@ actor: ApiTester
 modules:
     enabled:
         - REST:
-            url: http://127.0.0.1:8888/cuatro_php/php/api.php
+            url: http://127.0.0.1:8888/cuatro_php/
+            # url: http://127.0.0.1:8888/cuatro_php/php/api.php
             # url: http://localhost:8888/cuatro_php/php/api.php
             depends: PhpBrowser
         - Asserts

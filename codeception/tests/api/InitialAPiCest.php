@@ -4,11 +4,12 @@ class InitialAPiCest
 {
   public function _before(ApiTester $I)
   {
+    $this->prefijoApi = 'php/api.php';
   }
 
   public function postKo(ApiTester $I)
   {
-    $I->sendPost('/');
+    $I->sendPost($this->prefijoApi.'/');
     $I->seeResponseCodeIsSuccessful();
     $I->seeResponseIsJson();
 
@@ -19,7 +20,7 @@ class InitialAPiCest
 
   public function postGetBenderFriends(ApiTester $I)
   {
-    $I->sendPost('/', ['accion' => 'get_bender_friends']);
+    $I->sendPost($this->prefijoApi.'/', ['accion' => 'get_bender_friends']);
     $I->seeResponseCodeIsSuccessful();
     $I->seeResponseIsJson();
 
@@ -31,7 +32,7 @@ class InitialAPiCest
 
   public function postJuegoAutomatico(ApiTester $I)
   {
-    $I->sendPost('/', ['accion' => 'juego_automatico']);
+    $I->sendPost($this->prefijoApi.'/', ['accion' => 'juego_automatico']);
     $I->seeResponseCodeIsSuccessful();
     $I->seeResponseIsJson();
 

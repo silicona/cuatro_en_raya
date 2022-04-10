@@ -1,0 +1,23 @@
+actor: SeleniumTester
+modules:
+    enabled:
+        - \Helper\Selenium
+        - Asserts
+        # Selenium necesita su servidor local selenium-standalone on
+        - WebDriver:
+              url: http://localhost:8888/cuatro_php
+              browser: firefox
+              # browser: chrome
+              window_size: maximize
+              # window_size: 1200x1000
+              capabilities:
+                  chromeOptions:
+                      args: ["--headless"]
+                      # args: ["--headless", "--disable-gpu"]
+                  acceptInsecureCerts: true # allow self-signed certificates
+                  moz:firefoxOptions:
+                      args: ["headless"] # Run Firefox in headless mode
+gherkin:
+    contexts:
+        default:
+            - \Step\Selenium\SeleniumSteps

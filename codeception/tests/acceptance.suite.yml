@@ -9,12 +9,17 @@ modules:
     enabled:
         - PhpBrowser:
             url: http://localhost:8888/cuatro_php
-        # Selenium necesita su servidor local selenium-standalone on
-        # - WebDriver:
-        #     url: http://localhost:8080/cuatro_php
-        #     browser: chrome
         - \Helper\Acceptance
-gherkin:
-    contexts:
-        default:
-            - \Step\Acceptance\AcceptanceSteps
+        # - WebDriver:
+        #     url: http://localhost:8888/cuatro_php
+        #     browser: firefox
+        #     # browser: chrome
+        #     window_size: 1200x1000
+        #     capabilities:
+        #         chromeOptions:
+        #             args: ["--headless"]
+        #             # args: ["--headless", "--disable-gpu"]
+        #         acceptInsecureCerts: true # allow self-signed certificates
+        #         moz:firefoxOptions:
+        #             args: ["headless"] # Run Firefox in headless mode
+
