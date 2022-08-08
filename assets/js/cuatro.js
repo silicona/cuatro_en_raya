@@ -404,7 +404,7 @@ var Cuatro = {
 			url: "php/api.php",
 			data: {
 				accion: "juego_solitario",
-				num_rounds: 50
+				num_rounds: 100
 			}
 		});
 

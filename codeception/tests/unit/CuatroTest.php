@@ -20,6 +20,8 @@ class CuatroTest extends \Codeception\Test\Unit
     ];
 
     file_put_contents(MEM_FILE, json_encode([$this->mem_play_v]));
+
+    $this->cuatro->memory = json_decode(file_get_contents(MEM_FILE));
   }
 
   protected function _after()
@@ -79,7 +81,7 @@ class CuatroTest extends \Codeception\Test\Unit
   }
   
   /**
-   * @group wip
+   * group wip
    */
   public function testElegirColumnaAleatoria_OkExceps4()
   {
@@ -105,7 +107,7 @@ class CuatroTest extends \Codeception\Test\Unit
   }
 
   /**
-   * @group wip
+   * group wip
    */
   public function testElegirColumnaAprendizaje()
   {
@@ -158,7 +160,7 @@ class CuatroTest extends \Codeception\Test\Unit
       [1, '', '', '', 2, 1, '', '', '', '', '', '', '', '', '', ''], [1, 1, '', '', 2, '', '', '', '', '', '', '', 2, '', '', ''],
       [1, 1, 1, '', 2, '', '', '', '', '', '', '', 2, '', '', '']
     ];
-    file_put_contents(MEM_FILE, json_encode([$this->mem_play_v, $fake]));
+    $this->cuatro->memory = [$this->mem_play_v, $fake];
 
     $this->cuatro->tablero = [['M', null, null, null], ['H', null, null, null], [null, null, null, null], [null, null, null, null]];
     
@@ -184,11 +186,27 @@ class CuatroTest extends \Codeception\Test\Unit
   {
     file_put_contents(MEM_FILE, "");
 
+    $this->cuatro->memory = json_decode(file_get_contents(MEM_FILE));
+
     $this->cuatro->tablero = [['M', null, null, null], ['H', null, null, null], [null, null, null, null], [null, null, null, null]];
     
     $res = $this->tester->callMethod($this->cuatro, 'getEstrategiaResacoso', ['M']);
 
     $this->assertFalse($res, "Res debería ser false por memoria vacia");
+  }
+
+  /**
+   * @group wip
+   */
+  public function testIniciarJuegoAprendizaje()
+  {
+    $rounds = 5000;
+    $res = $this->cuatro->iniciarJuegoAprendizaje($rounds);
+    
+    $this->tester->seeMyVar($res);
+    $this->assertEquals("Ejecutadas $rounds partidas en solitario.", $res['mensaje'][3], 'Mensaje[3] debería contar todos los rounds ejecutados');
+
+    $this->assertEquals('¿Le damos caña otra vez?', $res['mensaje'][count($res['mensaje'])-1], 'Mensaje[last] debería ser correcto');
   }
 
   public function testIniciarJuegoSolitario()

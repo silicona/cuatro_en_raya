@@ -60,7 +60,7 @@ if($accion == 'get_bender_friends'){
 }
 
 if($accion == 'ver_memoria'){
-	echo json_encode($cuatro->getMemory());
+	echo json_encode($cuatro->getKillsByMemory());
 	exit;
 }
 

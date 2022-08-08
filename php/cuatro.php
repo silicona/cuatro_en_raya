@@ -186,8 +186,13 @@ class Cuatro
 	{
 		$col_elegida = $this->elegirConEstrategia();
 
-		if($col_elegida === false) $col_elegida = $this->elegirColumnaAleatoria();
+		if($col_elegida === false) {
+			$exceps = [];
+			$col_trampa = $this->elegirConTrampa();
+			if($col_trampa !== false) $exceps[] = $col_trampa;
 
+			$col_elegida = $this->elegirColumnaAleatoria($exceps);
+		}
 		return $col_elegida;
 	}
 
@@ -228,6 +233,9 @@ class Cuatro
 
 	private function elegirColumnaAprendizaje(string $jug = 'H')
 	{
+		$id_col_trampa = $this->elegirConTrampa($jug == 'H' ? 'M' : 'H');
+		if($id_col_trampa !== false) return $id_col_trampa;
+
 		$exceps = $this->getLosesByMemory($jug);
 
 		$id_col_a_evitar = $this->getEstrategiaFiestero($jug == 'H' ? 'M' : 'H');
@@ -270,6 +278,66 @@ class Cuatro
 
 		// 	return $this->$fn_estrategia($jugador == 'M' ? 'H' : 'M');
 		// }
+
+		return false;
+	}
+
+	private function elegirConTrampa(string $jug = 'M')
+	{
+		for ($i = 0; $i < 4; $i++) {
+
+			if ($i == 0) {
+				if ($this->tablero[0][$i] == null && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) {
+					return 0;
+				}
+				if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][$i] == null) {
+					return 3;
+				}
+			} else {
+				if($i == 1){
+					if ($this->tablero[0][0] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) {
+						return 1;
+					}
+					if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][0] == $jug) {
+						return 2;
+					}
+				}
+
+				if($i == 2){
+					if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && ($this->tablero[2][2] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][3] == $jug) {
+						return 2;
+					}
+					if ($this->tablero[0][3] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) {
+						return 1;
+					}
+				}
+
+				if($i == 3){
+					if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[3][3] == null && $this->tablero[3][$i - 1] == null)) {
+						return 3;
+					}
+					if (($this->tablero[0][$i] == null && $this->tablero[0][$i - 1] == null) && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) {
+						return 0;
+					}
+				}
+
+				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug	&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] == null)){
+					return 3;
+				}
+
+				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][$i] == $jug){
+					return 2;
+				}
+
+				if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug){
+					return 1;
+				}
+
+				if (($this->tablero[0][$i] == $jug && $this->tablero[0][$i - 1] == null) && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug){
+					return 0;
+				}
+			}
+		}
 
 		return false;
 	}
@@ -551,7 +619,8 @@ class Cuatro
 	{
 		$exceps = [];
 
-		$plays = json_decode(@file_get_contents(MEM_FILE));
+		$plays = $this->memory;
+		// $plays = json_decode(@file_get_contents(MEM_FILE));
 		if($plays){
 
 			$contra = $jug == 'H' ? 'M' : 'H';
@@ -596,7 +665,7 @@ class Cuatro
 		return $exceps;
 	}
 
-	public function getMemory(): array
+	public function getKillsByMemory(): array
 	{
 		$memoria = json_decode(@file_get_contents(MEM_FILE));
 		$salida = [];
@@ -620,7 +689,8 @@ class Cuatro
 	private function getNextsByMemory(string $jug)
 	{
 		$nexts = [];
-		$plays = json_decode(@file_get_contents(MEM_FILE));
+		$plays = $this->memory;
+		// $plays = json_decode(@file_get_contents(MEM_FILE));
 
 		if ($plays) {
 			$contra = $jug == 'M' ? 'H' : 'M';
@@ -730,9 +800,7 @@ class Cuatro
 
 	public static function guardarPartida(array $partida, int $ind_ganador): int
 	{
-		// if (count($partida) == 0) $partida = json_decode(@file_get_contents(MEM_TEMP_FILE));
 		if ($partida && count($partida) > 0) {
-			// if (!$partida) $partida = [];
 			$datos = json_decode(@file_get_contents(MEM_FILE));
 			if (!$datos) $datos = [];
 
@@ -762,13 +830,6 @@ class Cuatro
 					$repetida = true;
 					break;
 				}
-				// if ($repetida) break;
-				// foreach ($play as $i => $move) {
-				// 	if ($repetida) break;
-				// 	else if (!isset($partida[$i])) break;
-				// 	else if (count(array_diff($move, $partida[$i])) > 0) break;
-				// 	else $repetida = true;
-				//}
 			}
 
 			if (!$repetida) {
@@ -866,10 +927,13 @@ class Cuatro
 		$human = 0;
 		$machine = 0;
 		$draws = 0;
+		$saved = 0;
 		$total = $rounds;
 		while ($rounds > 0) {
 
+			$this->memory = json_decode(@file_get_contents(MEM_FILE));
 			$this->limpiar_tablero();
+
 			$ganador = false;
 			$partida = [];
 			for ($i = 0; $i < ($this->max_tokens * 4); $i++) {
@@ -884,6 +948,7 @@ class Cuatro
 					}
 					$tokenElegido = $this->anadirTokenAColumna($id_col);
 				}
+
 				$partida[] = array_merge(...$this->tablero);
 
 				if ($this->elegirGanador()) {
@@ -893,22 +958,15 @@ class Cuatro
 				$this->turno_maq = !$this->turno_maq;
 			}
 
-
 			if ($ganador !== false) {
-				if ($ganador == 'H') {
-					$human++;
-					//$arr_mensaje[] = 'Los Hados quisieron que ganarás, biológico.';
 
-				} else {
-					$machine++;
-					//$arr_mensaje[] = 'He ganado. La Fortuna lo quiso así.';
-				}
+				$ganador == 'H' ? $human++ : $machine++;
 
 				$bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
+				if($bytes) $saved++;
 
 			} else {
 				$draws++;
-				//$arr_mensaje[] = "Parece que tenemos tablas";
 			}
 
 			$rounds--;
@@ -919,8 +977,10 @@ class Cuatro
 		$arr_mensaje[] = "Chapa Blanda ha ganado $human partidas de chiripa.";
 		$arr_mensaje[] = "$draws empates insignificantes.";
 
-		$plays = json_decode(file_get_contents(MEM_FILE));
-		$arr_mensaje[] = "** Hay " . count($plays) . " guardadas **";
+		//$plays = json_decode(file_get_contents(MEM_FILE));
+		//$arr_mensaje[] = "** Hay " . count($plays) . " guardadas **";
+		$arr_mensaje[] = "** Se han guardado " . $saved . " nuevas partidas **";
+
 
 		$arr_mensaje[] = "";
 		$arr_mensaje[] = "¿Le damos caña otra vez?";
