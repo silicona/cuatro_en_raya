@@ -10,4 +10,11 @@ class Unit extends \Codeception\Module
   {
     $this->debug($var);
   }
+
+  public function callMethod(object $obj, string $functionName, array $args) {
+    $class = new \ReflectionClass($obj);
+    $method = $class->getMethod($functionName);
+    $method->setAccessible(true);
+    return $method->invokeArgs($obj, $args);
+  }
 }

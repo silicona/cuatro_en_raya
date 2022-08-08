@@ -3,12 +3,15 @@
 var Cuatro = {
 
 	host: 'localhost',
-	port: 9000,
+	port: 8081,
+	//port: 9000,
 	automatico: false,
 	label_automatico: 'Juego automático',
 	union: false,
 	requests: [],
 	niveles: ['Borracho', 'Fiestero', 'Resacoso', 'Sobrio'],
+	temp_file: 'def',
+	memoria: [],
 
 	actualizar_comunidad_users: function (type, user) {
 		if (type == 'add') {
@@ -69,6 +72,8 @@ var Cuatro = {
 
 						$('#btn_iniciar').html(Cuatro.label_automatico);
 						$('#resp').append(mensaje);
+
+						Cuatro.temp_file = datos.temp_file;
 						//Cuatro.habilitar_columnas();
 
 						if (datos.fin_partida) {
@@ -149,7 +154,8 @@ var Cuatro = {
 				tablero: tablero,
 				columna: event.currentTarget.getAttribute('data-id'),
 				nombre: nombre,
-				dificultad: $('#dificultad').val()
+				dificultad: $('#dificultad').val(),
+				temp_file: Cuatro.temp_file
 			}
 		});
 
@@ -312,7 +318,8 @@ var Cuatro = {
 
 	iniciar_socket: function (name, color) {
 
-		var wsUri = "ws://" + Cuatro.host + ":" + Cuatro.port + "/demo/server.php";
+		var wsUri = "ws://" + Cuatro.host + ":" + Cuatro.port + "/php/server.php";
+		// var wsUri = "ws://" + Cuatro.host + ":" + Cuatro.port + "/demo/server.php";
 		websocket = new WebSocket(wsUri);	//create a new WebSocket object.
 		var msgBox = $('#message-box');
 
@@ -383,6 +390,29 @@ var Cuatro = {
 		Cuatro.actualizar_rotulo('Automatic play');
 	},
 
+	jugar_solitario: function () {
+
+		Cuatro.automatico = true;
+		$('#resp').html('');
+		Cuatro.habilitar_columnas(false);
+		Cuatro.habilitar_columnas_socket(false);
+
+		Cuatro.ocultar_presentacion();
+
+		var ajax = $.ajax({
+			type: "POST",
+			url: "php/api.php",
+			data: {
+				accion: "juego_solitario",
+				num_rounds: 50
+			}
+		});
+
+		ajax.done(Cuatro.actualizar_tablero);
+
+		Cuatro.actualizar_rotulo('Lonely play');
+	},
+
 	jugar_partida: function () {
 
 		Cuatro.automatico = false;
@@ -406,63 +436,44 @@ var Cuatro = {
 		Cuatro.actualizar_rotulo('Playing vs. Bender (' + Cuatro.niveles[dif] + ')');
 	},
 
-	rellenar_tablero: function (arr_tokens) {
-
-		$(".token").removeClass("H M animado");
-
-		for (i = 0; i < arr_tokens.length; i++) {
-
-			if (typeof arr_tokens[i] != "object") {
-
-				$("#" + i).addClass(arr_tokens[i]);
-			}
-		}
-	},
-
-	unirse_comunidad: function (event) {
-		event.preventDefault();
-		var name = $('#union-nombre').val();
-		var color = $('#union-color').val();
-		var colors = ['#007AFF', '#FF7000', '#45A713', '#A7A713', '#15E25F', '#CFC700', '#CF1100', '#CF00BE', '#FF0000'];
-
-		if (color == '') {
-			var ind_color = Math.floor(Math.random() * colors.length);
-			color = colors[ind_color];
-		}
-
-		Cuatro.iniciar_socket(name, color)
-	},
-
-
 	mostrar_dificultad: function () {
 		$('.div_dificultad').show()
 	},
+	
+	mostrar_presentacion: function () {
+		$('.div_presentacion').show();
+		$('#presentacion_actual').html(0);
+		$('#presentacion_total').html(0);
 
-	send_move: function (event) {
-		Cuatro.habilitar_columnas_socket(false);
-
-		var tablero = [];
-		$('.token').map(function (i, item) {
-			var match = /(M|H)/.exec(item.className)
-
-			tablero[item.id] = match ? match[1] : null
-		})
-		var columna = event.currentTarget.getAttribute('data-id');
-
-		Cuatro.send_websocket('play', 'move', 0, { tablero: tablero, columna: columna });
+		$('#resp').html('').hide();
 	},
 
-	send_message: function () {
-		var message = $('#message');
+	mostrar_presentacion_adelante: function () {
+		num = $('#presentacion_actual').html();
 
-		if (message.val() == "") {
-			alert("Enter Some message Please!");
-			return;
+		if(num < Cuatro.memoria.length) {
+			num++;
+			Cuatro.rellenar_tablero(Cuatro.memoria[num-1]);
+			$('#presentacion_actual').html(num);
 		}
+	},
 
-		Cuatro.send_websocket('usermsg', message.val());
-		message.val(''); //reset message input
-		return true;
+	mostrar_presentacion_atras: function () {
+		num = $('#presentacion_actual').html();
+
+		if(num > 1) {
+			num--;
+			Cuatro.rellenar_tablero(Cuatro.memoria[num-1]);
+			$('#presentacion_actual').html(num);
+		}
+	},
+
+	ocultar_presentacion: function () {
+		$('.div_presentacion').hide();
+		$('#presentacion_actual').html(0);
+		$('#presentacion_total').html(0);
+
+		$(".token").removeClass("H M animado");
 	},
 
 	new_play_accept: function (event) {
@@ -533,6 +544,19 @@ var Cuatro = {
 		return reason;
 	},
 
+	rellenar_tablero: function (arr_tokens = []) {
+
+		$(".token").removeClass("H M animado");
+
+		for (i = 0; i < arr_tokens.length; i++) {
+
+			if (typeof arr_tokens[i] != "object") {
+
+				$("#" + i).addClass(arr_tokens[i]);
+			}
+		}
+	},
+
 	request_delete: function (id_op) {
 		var botones = $('#user-' + id_op + ' span.users-botones');
 		//var boton = $('<button>', { class: "ask-play", 'data-id': id_op, html: '?' });
@@ -564,6 +588,33 @@ var Cuatro = {
 		return false;
 	},
 
+	send_move: function (event) {
+		Cuatro.habilitar_columnas_socket(false);
+
+		var tablero = [];
+		$('.token').map(function (i, item) {
+			var match = /(M|H)/.exec(item.className)
+
+			tablero[item.id] = match ? match[1] : null
+		})
+		var columna = event.currentTarget.getAttribute('data-id');
+
+		Cuatro.send_websocket('play', 'move', 0, { tablero: tablero, columna: columna });
+	},
+
+	send_message: function () {
+		var message = $('#message');
+
+		if (message.val() == "") {
+			alert("Enter Some message Please!");
+			return;
+		}
+
+		Cuatro.send_websocket('usermsg', message.val());
+		message.val(''); //reset message input
+		return true;
+	},
+
 	send_websocket: function (type = 'play', message = '', id_op = 0, others = {}) {
 		var msg = {
 			type: type,
@@ -578,16 +629,71 @@ var Cuatro = {
 		return true;
 	},
 
+	unirse_comunidad: function (event) {
+		event.preventDefault();
+		var name = $('#union-nombre').val();
+		var color = $('#union-color').val();
+		var colors = ['#007AFF', '#FF7000', '#45A713', '#A7A713', '#15E25F', '#CFC700', '#CF1100', '#CF00BE', '#FF0000'];
+
+		if (color == '') {
+			var ind_color = Math.floor(Math.random() * colors.length);
+			color = colors[ind_color];
+		}
+
+		Cuatro.iniciar_socket(name, color)
+	},
+
+	ver_memoria: function() {
+		
+		Cuatro.automatico = false;
+		Cuatro.memoria = [];
+
+		Cuatro.mostrar_presentacion();
+		Cuatro.habilitar_columnas(false);
+		Cuatro.habilitar_columnas_socket(false);
+
+		$.ajax({
+			type: "POST",
+			url: "php/api.php",
+			data: {
+				accion: "ver_memoria",
+			},
+			success: function (resp) {
+
+				if(resp && resp.length) {
+					memoria = JSON.parse(resp);
+
+					$('#presentacion_actual').html(1);
+					$('#presentacion_total').html(memoria.length);
+
+					Cuatro.rellenar_tablero(memoria[0]);
+					Cuatro.memoria = memoria;
+				}
+			}
+		});
+
+		// ajax.done(Cuatro.actualizar_tablero);
+
+		// Cuatro.actualizar_rotulo('Playing vs. Bender (' + Cuatro.niveles[dif] + ')');
+	}
+
 }
 
 $(function () {
 	$("#btn_iniciar").on("click", Cuatro.jugar_automatico);
+	$("#btn_solitario").on("click", Cuatro.jugar_solitario);
 	$("#btn_iniciar_partida").on("click", function () { 
 		$('#resp')
-			.hide()
-			.html('');
-		$('.div_dificultad').show(); 
+		.hide()
+		.html('');
+		$('.div_dificultad').show();
+		Cuatro.ocultar_presentacion();
 	});
+
+	$("#btn_ver_memoria").on("click", Cuatro.ver_memoria);
+	$("#btn_adelante").on("click", Cuatro.mostrar_presentacion_adelante);
+	$("#btn_atras").on("click", Cuatro.mostrar_presentacion_atras);
+	$("#btn_cerrar_presentacion").on("click", Cuatro.ocultar_presentacion);
 
 	$("#btn_dificultad").on("click", Cuatro.jugar_partida);
 	$('#form-union').on('submit', Cuatro.unirse_comunidad);

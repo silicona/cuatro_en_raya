@@ -17,6 +17,7 @@ class FirstCest
     $I->see('Cuatro en raya', 'h1');
     $I->seeElement('h2');
     // $I->debug('Request');
+    $I->grabPageSource();
   }
 
   public function testSkippedAProposito(AcceptanceTester $I, \Codeception\Scenario $scenario)

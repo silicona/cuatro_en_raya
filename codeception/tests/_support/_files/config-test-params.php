@@ -5,6 +5,8 @@ return [
   'MEM_FILE' => $dir . '/memoria_test.txt',
   'MEM_TEMP_FILE' => $dir .'/memoria_test_temp.txt',
   'AMIGAS_FILE' => $dir . '/memoria_test_amigas.txt',
+  'BASE_URL' => 'http://localhost:8888/',
+
   'host' => 'localhost',
   'port' => 8889,
   'dbname' => 'agenda',

@@ -84,12 +84,27 @@
 					</div>
 					<div class="id_col">4</div>
 				</div>
+				<div class="div_presentacion">
+					<div class="div_btns_presentacion">
+						<button id="btn_atras">Atrás</button>
+						&emsp;
+						<span id="presentacion_actual">0</span> /	<span id="presentacion_total">0</span>
+						&emsp;
+						<button id="btn_adelante">Adelante</button>
+						&emsp;
+						<button id="btn_cerrar_presentacion">Cerrar</button>
+					</div>
+				</div>
 			</div>
 
 			<div id="controles">
 				<div class="botones">
-					<button id="btn_iniciar">Juego automático</button>
-					&emsp;
+					<!-- <button id="btn_iniciar">Juego automático</button>
+					<br><br> -->
+					<button id="btn_solitario">Juego solitario</button>
+					<br><br>
+					<button id="btn_ver_memoria">Ver memoria</button>
+					<br><br>
 					<button id="btn_iniciar_partida">Iniciar partida</button>
 					<div class="div_dificultad">
 						Dificultad:

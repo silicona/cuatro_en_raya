@@ -2,4 +2,5 @@ test/vendor
 test/composer.lock
 codeception/vendor
 codeception/composer.lock
+php/temps/*
 .DS_store

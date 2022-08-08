@@ -21,6 +21,18 @@ if($accion == "juego_automatico"){
 	exit;
 }
 
+if($accion == "juego_solitario"){
+
+	$num_rounds = intVal($_POST['num_rounds']);
+	//echo json_encode(['num' => $num_rounds]);
+	//exit;
+	if(!$num_rounds) $num_rounds = 1;
+
+	echo json_encode($cuatro -> iniciarJuegoAprendizaje($num_rounds));
+	// echo json_encode($cuatro -> iniciarJuegoSolitario());
+	exit;
+}
+
 if($accion == "jugar_partida"){
 
 	//$dificultad = $_POST['dificultad'];
@@ -35,13 +47,20 @@ if($accion == "echar_ficha"){
 	$columna = $_POST['columna'];
 	$nombre = limpia_varchar($_POST['nombre']);
 	$dificultad = $_POST['dificultad'];
+	$temp_file = $_POST['temp_file'];
+	//$cuatro->temp_file = $temp_file;
 
-	echo json_encode($cuatro -> echarFicha($tablero, $columna, $dificultad, $nombre));
+	echo json_encode($cuatro -> echarFicha($tablero, $columna, $dificultad, $nombre, $temp_file));
 	exit;
 }
 
 if($accion == 'get_bender_friends'){
 	echo json_encode($cuatro->getBenderFriends());
+	exit;
+}
+
+if($accion == 'ver_memoria'){
+	echo json_encode($cuatro->getMemory());
 	exit;
 }
 

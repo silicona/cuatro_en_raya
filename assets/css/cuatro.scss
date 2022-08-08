@@ -124,6 +124,25 @@ body {
 				color: #ffffff;
 			}
 		}
+
+		.div_presentacion {
+			clear: both;
+			text-align: center;
+			padding: .5ex;
+			display: none;
+
+			.div_btns_presentacion {
+				background-color: #efefef;
+				display: inline-block;
+				padding: .7ex 2ex;
+				border-radius: 7px;
+
+				button {
+					font-size: 1.1em;
+				}
+			}
+
+		}
 	}
 
 	#controles {

@@ -15,7 +15,7 @@ Follow Ganesha´s Truth, breathe PHP.
     - En consola, ejecuta `php -q php/server.php`
     - En la web, únete a la comunidad
   - Elije el tipo de partida:
-    - Juego automático,
+    - Juego solitario.
     - Partida contra Bender.
     - Invita a una usuaria de la comunidad a jugar.
   - Sigue las intrucciones de la pantalla.

@@ -15,12 +15,19 @@
  * @method void pause()
  *
  * @SuppressWarnings(PHPMD)
-*/
+ */
 class ApiTester extends \Codeception\Actor
 {
-    use _generated\ApiTesterActions;
+  use _generated\ApiTesterActions;
 
-    /**
-     * Define custom actions here
-     */
+  public function getDatosTest()
+  {
+    return $this->getSuiteConfig()['params'];
+  }
+
+  public function getSuiteConfig()
+  {
+    $config = \Codeception\Configuration::config();
+    return \Codeception\Configuration::suiteSettings('api', $config);
+  }
 }

@@ -99,6 +99,21 @@ body footer {
   text-align: center;
   color: #ffffff;
 }
+#contenedor #tablero .div_presentacion {
+  clear: both;
+  text-align: center;
+  padding: 0.5ex;
+  display: none;
+}
+#contenedor #tablero .div_presentacion .div_btns_presentacion {
+  background-color: #efefef;
+  display: inline-block;
+  padding: 0.7ex 2ex;
+  border-radius: 7px;
+}
+#contenedor #tablero .div_presentacion .div_btns_presentacion button {
+  font-size: 1.1em;
+}
 #contenedor #controles {
   padding: 0 1em;
   padding-bottom: 0;

@@ -43,6 +43,11 @@ class Cuatro
 		return false;
 	}
 
+	private function deleteTempPlay()
+	{
+		return unlink(BASE_TEMP . $this->temp_file);
+	}
+
 	private function determinarColumna(int $id_token): int
 	{
 		return ceil(++$id_token / 4) - 1;
@@ -54,10 +59,11 @@ class Cuatro
 		return $posiciones[$id_columna][$altura];
 	}
 
-	public function echarFicha(array $tablero, int $columna, int $dificultad, string $nombre = '')
+	public function echarFicha(array $tablero, int $columna, int $dificultad, string $nombre = '', string $temp_file = '')
 	{
 		$this->tablero = array_chunk($tablero, 4);
 		$this->dificultad = $dificultad;
+		$this->temp_file = $temp_file;
 		$this->turno_maq = false;
 		$fin_partida = false;
 		$linea = false;
@@ -99,16 +105,19 @@ class Cuatro
 			if ($fin_partida) {
 				$linea = $this->getLineaGanadora($tablero);
 
-				Cuatro::guardarPartida([], $this->turno_maq ? 1 : 0);
+				Cuatro::guardarPartida($this->getTempPlay(), $this->turno_maq ? 1 : 0);
+				$this->deleteTempPlay();
+				// Cuatro::guardarPartida([], $this->turno_maq ? 1 : 0);
 			}
 
 			if (!$fin_partida && !in_array(null, $tablero)) {
 				$fin_partida = true;
 				$arr_mensaje[] = 'No hay más posiciones disponibles.';
 				$arr_mensaje[] = 'La partida termina en tablas';
+				$this->deleteTempPlay();
 			}
 
-			if($fin_partida && strlen($nombre) > 0){
+			if ($fin_partida && strlen($nombre) > 0) {
 				$this->guardarAmistadBender(trim($nombre), $ganador);
 			}
 		} catch (Exception $e) {
@@ -120,6 +129,7 @@ class Cuatro
 			'mensaje' => $arr_mensaje,
 			'fin_partida' => $fin_partida,
 			'linea' => $linea,
+			'temp_file' => $this->temp_file
 		);
 	}
 
@@ -147,12 +157,17 @@ class Cuatro
 			}
 
 			$tablero = array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2], $this->tablero[3]);
-			if ($fin_partida) $linea = $this->getLineaGanadora($tablero);
+			if ($fin_partida) {
+				$linea = $this->getLineaGanadora($tablero);
+				//Cuatro::guardarPartida($this->getTempPlay(), $this->turno_maq ? 1 : 0);
+				$this->deleteTempPlay();
+			}
 
 			if (!$fin_partida && !in_array(null, $tablero)) {
 				$fin_partida = true;
 				$arr_mensaje[] = 'No hay más posiciones disponibles.';
 				$arr_mensaje[] = 'La partida termina en tablas';
+				$this->deleteTempPlay();
 			}
 		} catch (Exception $e) {
 			$arr_mensaje = ['EcharFicha: ' . $e];
@@ -169,25 +184,60 @@ class Cuatro
 
 	private function elegirColumna()
 	{
-		$arr_cols = [0, 1, 2, 3];
-
 		$col_elegida = $this->elegirConEstrategia();
-		while (!$col_elegida) {
+
+		if($col_elegida === false) $col_elegida = $this->elegirColumnaAleatoria();
+
+		return $col_elegida;
+	}
+
+	private function elegirColumnaAleatoria(array $exceps = [])
+	{
+		if(count($exceps) > 3) $exceps = [];
+
+		$arr_cols = array_diff([0, 1, 2, 3], $exceps);
+		sort($arr_cols);
+
+		$id_col = false;
+		while ($id_col === false) {
 
 			$index = rand(0, count($arr_cols) - 1);
-			$col_id = $arr_cols[$index];
+			$aux_id = $arr_cols[$index];
 
-			if (!preg_match('/(M|H)/', strval($this->tablero[$col_id][$this->max_tokens - 1]))) {
-				$col_elegida = $col_id;
+			if (!preg_match('/(M|H)/', strval($this->tablero[$aux_id][$this->max_tokens - 1]))) {
+				$id_col = $aux_id;
 				break;
 			}
 
 			array_splice($arr_cols, $index, 1);
 
 			if (empty($arr_cols)) {
-				break;
+
+				if(!empty($exceps)) {
+					$arr_cols = $exceps;
+					$exceps = [];
+				} else {
+					break;
+				}
 			}
 		}
+
+		return $id_col;
+	}
+
+
+	private function elegirColumnaAprendizaje(string $jug = 'H')
+	{
+		$exceps = $this->getLosesByMemory($jug);
+
+		$id_col_a_evitar = $this->getEstrategiaFiestero($jug == 'H' ? 'M' : 'H');
+
+		if($id_col_a_evitar !== false && !in_array($id_col_a_evitar, $exceps)) {
+			$exceps[] = $id_col_a_evitar;
+			sort($exceps);
+		}
+
+		$col_elegida = $this->elegirColumnaAleatoria($exceps);
 
 		return $col_elegida;
 	}
@@ -207,16 +257,19 @@ class Cuatro
 				$fn_estrategia = 'getEstrategiaBorracho';
 		}
 
-		$col = $this->$fn_estrategia($jugador);
-		// $col = $this->getColumnaEstrategica($jugador);
-		if ($this->max_tokens < 4) {
-			return $col;
-		} else if ($this->turno_maq) {
-			if ($col) return $col;
+		$id_col = $this->$fn_estrategia($jugador);
+		if ($id_col !== false) return $id_col;
 
-			return $this->$fn_estrategia('H');
-			//return $this->getColumnaEstrategica('H');
-		}
+		if ($this->max_tokens == 4) return $this->$fn_estrategia($jugador == 'M' ? 'H' : 'M');
+
+		// $col = $this->getColumnaEstrategica($jugador);
+		// if ($this->max_tokens < 4) {
+		// 	return $id_col;
+		// } 
+		// else if ($this->turno_maq) {
+
+		// 	return $this->$fn_estrategia($jugador == 'M' ? 'H' : 'M');
+		// }
 
 		return false;
 	}
@@ -274,12 +327,12 @@ class Cuatro
 			'records' => [],
 			'error' => false
 		];
-		if($datos != null) {
+		if ($datos != null) {
 
-			foreach($datos as $registro){
+			foreach ($datos as $registro) {
 				$amiga = AmigaBender::factory($registro);
 				$top = $amiga->getTopRecord();
-				if(!isset($records['tops'][$top['puntos']])) $records['tops'][$top['puntos']] = [];
+				if (!isset($records['tops'][$top['puntos']])) $records['tops'][$top['puntos']] = [];
 				$records['tops'][$top['puntos']][] = $top;
 				////$records['tops'][] = $amiga->getTopRecord();
 				$records['records'][] = $amiga->toArray();
@@ -292,7 +345,6 @@ class Cuatro
 	}
 
 	private function getEstrategiaBorracho(string $jug)
-	//private function getColumnaEstrategica(string $jug)
 	{
 		if ($this->max_tokens > 3) {
 			// Diagonal 0-5-10-15
@@ -380,91 +432,44 @@ class Cuatro
 
 	private function getEstrategiaFiestero(string $jug)
 	{
-		if ($this->max_tokens > 3) {
-			// Diagonal 0-5-10-15
-			if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && $this->tablero[3][2] !== null && $this->tablero[3][3] == null) {
-				return 3;
-			}
-
-			// Diagonal 12-9-6-3
-			if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && $this->tablero[1][2] == $jug && $this->tablero[0][2] !== null && $this->tablero[0][3] == null) {
-				return 0;
-			}
-
-			for ($i = 0; $i < 4; $i++) {
-				// Vertical 4
-				if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == $jug && $this->tablero[$i][3] == null) {
-					return $i;
-				}
-
-				// Horizontal 4 0->3 - 3->0
-				if ($i == 0) {
-					if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) {
-						return 3;
-					}
-					if ($this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[0][$i] == null) {
-						return 0;
-					}
-				} else {
-					if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i - 1] != null && $this->tablero[3][$i] == null) {
-						return 3;
-					}
-					if ($this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[0][$i - 1] != null && $this->tablero[0][$i] == null) {
-						return 0;
-					}
-				}
-			}
-		}
-		// Diagonal 0-5-10
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][1] !== null && $this->tablero[2][2] == null) {
-			return 2;
-		}
-
-		// Diagonal 12-9-6
-		if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && $this->tablero[1][1] !== null && $this->tablero[1][2] == null) {
-			return 1;
-		}
 
 		for ($i = 0; $i < 4; $i++) {
-			// Vertical 3
-			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == null) {
-				return $i;
-			}
 
-			// Horizontal 3 0->2 - 3->1
+			// Horizontal dos a tres: 1-2
 			if ($i == 0) {
-				if (
-					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == null
-					&& ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
-				) {
-					return 2;
-				}
-				if (
-					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == null
-					&& ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
-				) {
-					return 1;
+				if ($this->tablero[0][$i] == null && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) {
+					return rand(0, 1) ? 0 : 3;
 				}
 			} else {
-				if (
-					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i - 1] != null
-					&& $this->tablero[2][$i] == null && ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
+				if (($this->tablero[0][$i] == null && $this->tablero[0][$i - 1] != null)
+					&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug
+					&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] != null)
 				) {
-					return 2;
-				}
-				if (
-					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i - 1] != null
-					&& $this->tablero[1][$i] == null && ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
-				) {
-					return 1;
+					return $this->tablero[0][$i - 1] == $jug ? 0 : 3;
 				}
 			}
 		}
 
-		return false;
+		return $this->getEstrategiaBorracho($jug);
 	}
 
 	private function getEstrategiaResacoso(string $jug)
+	{
+		$nexts = $this->getNextsByMemory($jug);
+
+		if (count($nexts) > 0) {
+
+			$cols = $this->dificultad == 3 ? array_shift($nexts) : array_pop($nexts);
+
+			$id_col = $cols[array_rand($cols)];
+		} else {
+			$id_col = $this->getEstrategiaFiestero($jug);
+		}
+
+		return $id_col;
+	}
+
+	private function getEstrategiaResacosoOld(string $jug)
 	{
 		$id_col = false;
 
@@ -526,91 +531,6 @@ class Cuatro
 		}
 
 		return $id_col;
-
-		//var_export($combis[0]);
-		/*
-		if ($this->max_tokens > 3) {
-			// Diagonal 0-5-10-15
-			if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && $this->tablero[3][2] !== null && $this->tablero[3][3] == null) {
-				return 3;
-			}
-
-			// Diagonal 12-9-6-3
-			if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && $this->tablero[1][2] == $jug && $this->tablero[0][2] !== null && $this->tablero[0][3] == null) {
-				return 0;
-			}
-
-			for ($i = 0; $i < 4; $i++) {
-				// Vertical 4
-				if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == $jug && $this->tablero[$i][3] == null) {
-					return $i;
-				}
-
-				// Horizontal 4 0->3 - 3->0
-				if ($i == 0) {
-					if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) {
-						return 3;
-					}
-					if ($this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[0][$i] == null) {
-						return 0;
-					}
-				} else {
-					if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i - 1] != null && $this->tablero[3][$i] == null) {
-						return 3;
-					}
-					if ($this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[0][$i - 1] != null && $this->tablero[0][$i] == null) {
-						return 0;
-					}
-				}
-			}
-		}
-		// Diagonal 0-5-10
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][1] !== null && $this->tablero[2][2] == null) {
-			return 2;
-		}
-
-		// Diagonal 12-9-6
-		if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && $this->tablero[1][1] !== null && $this->tablero[1][2] == null) {
-			return 1;
-		}
-
-		for ($i = 0; $i < 4; $i++) {
-			// Vertical 3
-			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == null) {
-				return $i;
-			}
-
-			// Horizontal 3 0->2 - 3->1
-			if ($i == 0) {
-				if (
-					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == null
-					&& ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
-				) {
-					return 2;
-				}
-				if (
-					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == null
-					&& ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
-				) {
-					return 1;
-				}
-			} else {
-				if (
-					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i - 1] != null
-					&& $this->tablero[2][$i] == null && ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
-				) {
-					return 2;
-				}
-				if (
-					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i - 1] != null
-					&& $this->tablero[1][$i] == null && ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
-				) {
-					return 1;
-				}
-			}
-		}
-		return false;
-		*/
 	}
 
 	private function getLineaGanadora($tablero): array
@@ -627,15 +547,146 @@ class Cuatro
 		return false;
 	}
 
+	private function getLosesByMemory(string $jug = 'H')
+	{
+		$exceps = [];
+
+		$plays = json_decode(@file_get_contents(MEM_FILE));
+		if($plays){
+
+			$contra = $jug == 'H' ? 'M' : 'H';
+			$tablero = array_map(function ($cell) use ($jug, $contra) {
+				if ($cell == $contra) $cell = 1;
+				else if ($cell == $jug) $cell = 2;
+				else $cell = '';
+				return $cell;
+			}, array_merge(...$this->tablero));
+
+			foreach ($plays as $play) {
+				$filt = array_filter($play[0]);
+				$inicio = array_shift($filt) == 1 ? true : false;
+				foreach ($play as $i => $move) {
+					
+					// Saltamos movimientos del ganador
+					if ($inicio && $i % 2 != 0) continue;
+					else if (!$inicio && $i % 2 == 0) continue;
+					
+					if ($tablero == $move) {
+						$id_next = $i + 1; // Proximo movimiento registrado de jug
+						$id_next_op = $i + 2; // Futuro movimiento de contra
+						$id_col_aux = false;
+						foreach ($play[$id_next] as $id_token => $next) {
+							if ($tablero[$id_token] == '' && $next == 2) {
+								$id_col_aux = $this->determinarColumna($id_token);
+								break;
+							}
+						}
+
+						if ($id_col_aux !== false) {
+							if(in_array($id_col_aux, $exceps) === false) $exceps[] = $id_col_aux;
+						}
+						break;
+					}
+				}
+			}
+
+			if (count($exceps) > 0) sort($exceps);
+		}
+
+		return $exceps;
+	}
+
+	public function getMemory(): array
+	{
+		$memoria = json_decode(@file_get_contents(MEM_FILE));
+		$salida = [];
+		foreach ($memoria as $i => $play) {
+			$last = $play[count($play) - 1];
+
+			$last = array_map(function ($cell) {
+				if ($cell == 1) $cell = 'M';
+				else if ($cell == 2) $cell = 'H';
+				else $cell = null;
+				return $cell;
+			}, $last);
+
+			if(!in_array($last, $salida)) $salida[] = $last;
+		}
+
+		//$salida = array_filter($salida, function($a, $b) { return $a != $b; });
+		return $salida;
+	}
+
+	private function getNextsByMemory(string $jug)
+	{
+		$nexts = [];
+		$plays = json_decode(@file_get_contents(MEM_FILE));
+
+		if ($plays) {
+			$contra = $jug == 'M' ? 'H' : 'M';
+			$tablero = array_map(function ($cell) use ($jug, $contra) {
+				if ($cell == $contra) $cell = 2;
+				else if ($cell == $jug) $cell = 1;
+				else $cell = '';
+				return $cell;
+			}, array_merge(...$this->tablero));
+
+			foreach ($plays as $play) {
+				$filt = array_filter($play[0]);
+				$inicio = array_shift($filt) == 1 ? true : false;
+				foreach ($play as $i => $move) {
+
+					// Saltamos movimientos del oponente
+					if ($inicio && $i % 2 == 0) continue;
+					else if (!$inicio && $i % 2 != 0) continue;
+
+					if ($tablero == $move) {
+						$id_next = $i + 1; // Proximo movimiento registrado de jug
+						$id_next_op = $i + 2; // Futuro movimiento de contra
+						$id_col_aux = false;
+						foreach ($play[$id_next] as $id_token => $next) {
+							if ($tablero[$id_token] == '' && $next == 1) {
+								$id_col_aux = $this->determinarColumna($id_token);
+								break;
+							}
+						}
+
+						if ($id_col_aux !== false) {
+							$stepsVictory = count($play) - $id_next;
+
+							if (!isset($nexts[$stepsVictory]))	$nexts[$stepsVictory] = [];
+
+							if (!in_array($id_col_aux, $nexts[$stepsVictory]))
+								$nexts[$stepsVictory][] = $id_col_aux;
+						}
+						break;
+					}
+				}
+			}
+
+			if (count($nexts) > 0) ksort($nexts);
+		}
+
+		return $nexts;
+	}
+
+	private function getTempPlay()
+	{
+		$datos = json_decode(@file_get_contents(BASE_TEMP . $this->temp_file));
+		if (!$datos) $datos = [];
+
+		return $datos;
+	}
+
 	private function guardarAmistadBender(string $nombre, string $ganador)
 	{
 		$datos = json_decode(@file_get_contents(AMIGAS_FILE), true);
 		$amiga = false;
 		$ind = false;
-		if($datos != null) {
+		if ($datos != null) {
 
-			foreach($datos as $i => $registro){
-				if($registro['nombre'] == $nombre){
+			foreach ($datos as $i => $registro) {
+				if ($registro['nombre'] == $nombre) {
 					$amiga = AmigaBender::factory($registro);
 					$ind = $i;
 					break;
@@ -645,11 +696,11 @@ class Cuatro
 			$datos = [];
 		}
 
-		if(!$amiga) $amiga = new AmigaBender($nombre);
+		if (!$amiga) $amiga = new AmigaBender($nombre);
 
 		$amiga->actualizarNumeros($this->dificultad, $ganador);
 
-		if($ind !== false) $datos[$ind] = $amiga->toArray();
+		if ($ind !== false) $datos[$ind] = $amiga->toArray();
 		else $datos[] = $amiga->toArray();
 
 		return file_put_contents(AMIGAS_FILE, json_encode($datos));
@@ -660,10 +711,12 @@ class Cuatro
 		$tablero = array_merge(...$this->tablero);
 
 		if (count(array_filter($tablero)) == 1) {
-			file_put_contents(MEM_TEMP_FILE, '');
+			file_put_contents(BASE_TEMP . $this->temp_file, '');
+			// file_put_contents(MEM_TEMP_FILE, '');
 			$datos = [];
 		} else {
-			$str_datos = @file_get_contents(MEM_TEMP_FILE);
+			$str_datos = @file_get_contents(BASE_TEMP . $this->temp_file);
+			// $str_datos = @file_get_contents(MEM_TEMP_FILE);
 			$datos = json_decode($str_datos);
 		}
 
@@ -671,40 +724,60 @@ class Cuatro
 
 		$datos[] = $tablero;
 
-		return file_put_contents(MEM_TEMP_FILE, json_encode($datos));
+		return file_put_contents(BASE_TEMP . $this->temp_file, json_encode($datos));
+		// return file_put_contents(MEM_TEMP_FILE, json_encode($datos));
 	}
 
 	public static function guardarPartida(array $partida, int $ind_ganador): int
 	{
-		$datos = json_decode(@file_get_contents(MEM_FILE));
-		if (!$datos) $datos = [];
+		// if (count($partida) == 0) $partida = json_decode(@file_get_contents(MEM_TEMP_FILE));
+		if ($partida && count($partida) > 0) {
+			// if (!$partida) $partida = [];
+			$datos = json_decode(@file_get_contents(MEM_FILE));
+			if (!$datos) $datos = [];
 
-		if (count($partida) == 0) $partida = json_decode(@file_get_contents(MEM_TEMP_FILE));
-		if (!$partida) $partida = [];
+			usort($datos, function ($a, $b) {
+				if (count($a) == count($b)) {
+					return 0;
+				}
 
-		$ganador = $ind_ganador % 2 == 0 ? 'H' : 'M';
-		$perdedor = $ganador == 'H' ? 'M' : 'H';
+				return (count($a) < count($b)) ? -1 : 1;
+			});
 
-		for ($i = 0; $i < count($partida); $i++) {
-			for ($j = 0; $j < count($partida[$i]); $j++) {
-				if ($partida[$i][$j] == $ganador) $partida[$i][$j] = 1;
-				else if ($partida[$i][$j] == $perdedor) $partida[$i][$j] = 2;
-				else $partida[$i][$j] = '';
+
+			$ganador = $ind_ganador % 2 == 0 ? 'H' : 'M';
+			$perdedor = $ganador == 'H' ? 'M' : 'H';
+
+			for ($i = 0; $i < count($partida); $i++) {
+				for ($j = 0; $j < count($partida[$i]); $j++) {
+					if ($partida[$i][$j] == $ganador) $partida[$i][$j] = 1;
+					else if ($partida[$i][$j] == $perdedor) $partida[$i][$j] = 2;
+					else $partida[$i][$j] = '';
+				}
+			}
+
+			$repetida = false;
+			foreach ($datos as $play) {
+				if ($play == $partida) {
+					$repetida = true;
+					break;
+				}
+				// if ($repetida) break;
+				// foreach ($play as $i => $move) {
+				// 	if ($repetida) break;
+				// 	else if (!isset($partida[$i])) break;
+				// 	else if (count(array_diff($move, $partida[$i])) > 0) break;
+				// 	else $repetida = true;
+				//}
+			}
+
+			if (!$repetida) {
+				$datos[] = $partida;
+				return file_put_contents(MEM_FILE, json_encode($datos));
 			}
 		}
-		$repetida = false;
-		foreach ($datos as $play) {
-			if ($repetida) break;
-			foreach ($play as $i => $move) {
-				if ($repetida) break;
-				else if (!isset($partida[$i])) break;
-				else if (count(array_diff($move, $partida[$i])) > 0) break;
-				else $repetida = true;
-			}
-		}
-		if (!$repetida)	$datos[] = $partida;
 
-		return file_put_contents(MEM_FILE, json_encode($datos));
+		return false;
 	}
 
 	public function iniciarJuegoAutomatico()
@@ -778,11 +851,152 @@ class Cuatro
 		);
 	}
 
+	public function iniciarJuegoAprendizaje(int $rounds = 1)
+	{
+		$this->max_tokens = 4;
+		$this->dificultad = 3;
+		$this->turno_maq = $this->iniciarTurno();
+
+		$arr_mensaje = array(
+			"Partida de aprendizaje - Nivel " . ($this->dificultad === 3 ? "Sobrio" : "irrelevante"),
+			"Yo llevo las amarillas y tu las verdes, que estás aprendiendo, nudillos de hueso.",
+			"",
+		);
+
+		$human = 0;
+		$machine = 0;
+		$draws = 0;
+		$total = $rounds;
+		while ($rounds > 0) {
+
+			$this->limpiar_tablero();
+			$ganador = false;
+			$partida = [];
+			for ($i = 0; $i < ($this->max_tokens * 4); $i++) {
+
+				$tokenElegido = false;
+				while ($tokenElegido === false) {
+					// $id_col = $this->elegirColumna();
+					if($this->turno_maq) {
+						$id_col = $this->elegirColumna();
+					} else {
+						$id_col = $this->elegirColumnaAprendizaje();
+					}
+					$tokenElegido = $this->anadirTokenAColumna($id_col);
+				}
+				$partida[] = array_merge(...$this->tablero);
+
+				if ($this->elegirGanador()) {
+					$ganador = $this->turno_maq ? 'M' : 'H';
+					break;
+				}
+				$this->turno_maq = !$this->turno_maq;
+			}
+
+
+			if ($ganador !== false) {
+				if ($ganador == 'H') {
+					$human++;
+					//$arr_mensaje[] = 'Los Hados quisieron que ganarás, biológico.';
+
+				} else {
+					$machine++;
+					//$arr_mensaje[] = 'He ganado. La Fortuna lo quiso así.';
+				}
+
+				$bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
+
+			} else {
+				$draws++;
+				//$arr_mensaje[] = "Parece que tenemos tablas";
+			}
+
+			$rounds--;
+		}
+
+		$arr_mensaje[] = "Ejecutadas $total partidas en solitario.";
+		$arr_mensaje[] = "Sir Bender Culo Metálico ha ganado $machine partidas con gran maña.";
+		$arr_mensaje[] = "Chapa Blanda ha ganado $human partidas de chiripa.";
+		$arr_mensaje[] = "$draws empates insignificantes.";
+
+		$plays = json_decode(file_get_contents(MEM_FILE));
+		$arr_mensaje[] = "** Hay " . count($plays) . " guardadas **";
+
+		$arr_mensaje[] = "";
+		$arr_mensaje[] = "¿Le damos caña otra vez?";
+
+		return array(
+			'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
+			'mensaje' => $arr_mensaje,
+		);
+	}
+
+	public function iniciarJuegoSolitario()
+	{
+		$this->max_tokens = 4;
+		$this->dificultad = 3;
+		$this->turno_maq = $this->iniciarTurno();
+
+		$arr_mensaje = array(
+			// "Partida en solitario - Nivel Borracho",
+			"Partida en solitario - Nivel " . ($this->dificultad === 3 ? "Sobrio" : "irrelevante"),
+			"Yo llevo las amarillas y tu las verdes.",
+			($this->turno_maq ? "El azar ha decidido que empiezo yo." : "El azar quiere que empieces!")
+		);
+
+		$ganador = false;
+		$partida = [];
+		for ($i = 0; $i < ($this->max_tokens * 4); $i++) {
+
+			$tokenElegido = false;
+			while ($tokenElegido === false) {
+					$id_col = $this->elegirColumna();
+
+				$tokenElegido = $this->anadirTokenAColumna($id_col);
+			}
+			$partida[] = array_merge(...$this->tablero);
+
+			if ($this->elegirGanador()) {
+				$ganador = $this->turno_maq ? 'M' : 'H';
+				break;
+			}
+			$this->turno_maq = !$this->turno_maq;
+		}
+
+		if ($ganador) {
+			$ind = 1;
+			if ($ganador == 'H') {
+				$arr_mensaje[] = 'Los Hados quisieron que ganarás, biológico.';
+				$ind = 2;
+			} else {
+				$arr_mensaje[] = 'He ganado. La Fortuna lo quiso así.';
+			}
+
+			$bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
+
+			$arr_mensaje[] = "Guardados $bytes bytes";
+		} else {
+			$arr_mensaje[] = "Parece que tenemos tablas";
+		}
+
+		$plays = json_decode(file_get_contents(MEM_FILE));
+		$arr_mensaje[] = "Hay " . count($plays) . " guardadas";
+
+		$arr_mensaje[] = "";
+		$arr_mensaje[] = "¿Jugamos otra vez?";
+
+		return array(
+			'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
+			'mensaje' => $arr_mensaje,
+		);
+	}
+
 	public function iniciarPartida(int $dificultad)
 	{
 		$this->max_tokens = 4;
 		$this->turno_maq = $this->iniciarTurno();
 		$this->dificultad = $dificultad;
+		$this->temp_file = 'play_' . (new DateTime())->format('Uu') . '.txt';
 
 		$arr_mensaje = array(
 			"Partida manual",
@@ -802,12 +1016,42 @@ class Cuatro
 
 		return array(
 			'tablero' => array_merge($this->tablero[0],	$this->tablero[1], $this->tablero[2],	$this->tablero[3]),
-			'mensaje' => $arr_mensaje
+			'mensaje' => $arr_mensaje,
+			'temp_file' => $this->temp_file
 		);
 	}
 
 	public function iniciarTurno(): bool
 	{
 		return rand() % 2 == 0;
+	}
+
+	private function limpiar_tablero()
+	{
+		$this->tablero = [];
+		for($i = 0; $i < 4; $i++) {
+			$aux = [];
+			for($j = 0; $j < 4; $j++) $aux[] = null;
+			$this->tablero[] = $aux;
+		}
+	}
+
+	private function transform_tablero(array $tablero) {
+		//if()
+	}
+
+	private function ordenarArrayPorElementos($array, $orden = "asc")
+	{
+		usort($array, function ($a, $b) use ($orden) {
+			if (count($a) == count($b)) {
+				return 0;
+			}
+			if ($orden != "asc") {
+
+				return (count($a) > count($b)) ? -1 : 1;
+			}
+
+			return (count($a) < count($b)) ? -1 : 1;
+		});
 	}
 }

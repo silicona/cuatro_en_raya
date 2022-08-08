@@ -4,9 +4,10 @@ require_once 'class.socketuser.php';
 require_once 'cuatro.php';
 class Sockeador
 {
-  // public static $host = '127.0.0.1';
   public static $host = 'localhost';
-  public static $port = 9000;
+  public static $port = 8081;
+  // public static $host = '127.0.0.1';
+  // public static $port = 9000;
   public $socket;
   public $clients = [];
   public $users = [];
@@ -61,6 +62,7 @@ class Sockeador
     socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1);
 
     //bind socket to specified host
+    // socket_bind($socket, "localhost", Sockeador::$port);
     socket_bind($socket, 0, Sockeador::$port);
 
     //listen to port
@@ -161,6 +163,7 @@ class Sockeador
       $this->send_message($response_text, $id_op);
 
       $play->cuatro = new Cuatro();
+      $play->cuatro->temp_file = 'play_' . (new DateTime())->format('Uu') . '.txt';
       $turno = $id_user;
       $contra = $id_op;
       if ($play->cuatro->iniciarTurno()) {
@@ -262,6 +265,7 @@ class Sockeador
 
     if ($play) {
       $res = $play->cuatro->echarFichaSocket($datos['tablero'], $datos['columna'], $this->users[$id_user]->name);
+      // $res = $play->cuatro->echarFichaSocket($datos['tablero'], $datos['columna'], $this->users[$id_user]->name);
 
       $arr_res = array(
         'type' => 'play',
