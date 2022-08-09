@@ -184,8 +184,13 @@ class Cuatro
 
 	private function elegirColumna()
 	{
-		$col_elegida = $this->elegirConEstrategia();
 
+		$col_elegida = $this->elegirConEstrategia();
+		//$col_muerte_subita = $this->elegirConTrampa('H');
+		
+		//if($col_trampa !== false && $col_elegida == $col_trampa) $col_elegida = false;
+		//if($col_muerte_subita !== false && $col_elegida == $col_muerte_subita) $col_elegida = false;
+		
 		if($col_elegida === false) {
 			$exceps = [];
 			$col_trampa = $this->elegirConTrampa();
@@ -977,10 +982,10 @@ class Cuatro
 		$arr_mensaje[] = "Chapa Blanda ha ganado $human partidas de chiripa.";
 		$arr_mensaje[] = "$draws empates insignificantes.";
 
-		//$plays = json_decode(file_get_contents(MEM_FILE));
-		//$arr_mensaje[] = "** Hay " . count($plays) . " guardadas **";
 		$arr_mensaje[] = "** Se han guardado " . $saved . " nuevas partidas **";
-
+		
+		$plays = json_decode(file_get_contents(MEM_FILE));
+		$arr_mensaje[] = "** Hay " . count($plays) . " partidas guardadas **";
 
 		$arr_mensaje[] = "";
 		$arr_mensaje[] = "¿Le damos caña otra vez?";

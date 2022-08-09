@@ -19,9 +19,13 @@ class CuatroTest extends \Codeception\Test\Unit
       [1, 1, 1, 1, 2, 2, '', '', '', '', '', '', 2, '', '', '']
     ];
 
-    file_put_contents(MEM_FILE, json_encode([$this->mem_play_v]));
+    $this->cuatro->memory = json_decode(@file_get_contents(MEM_FILE));
 
-    $this->cuatro->memory = json_decode(file_get_contents(MEM_FILE));
+    if(!$this->cuatro->memory) {
+      $this->cuatro->memory = [$this->mem_play_v];
+      file_put_contents(MEM_FILE, json_encode($this->cuatro->memory));
+    }
+
   }
 
   protected function _after()
@@ -200,10 +204,10 @@ class CuatroTest extends \Codeception\Test\Unit
    */
   public function testIniciarJuegoAprendizaje()
   {
-    $rounds = 5000;
+    $rounds = 3000;
     $res = $this->cuatro->iniciarJuegoAprendizaje($rounds);
     
-    $this->tester->seeMyVar($res);
+    $this->tester->seeMyVar($res['mensaje']);
     $this->assertEquals("Ejecutadas $rounds partidas en solitario.", $res['mensaje'][3], 'Mensaje[3] debería contar todos los rounds ejecutados');
 
     $this->assertEquals('¿Le damos caña otra vez?', $res['mensaje'][count($res['mensaje'])-1], 'Mensaje[last] debería ser correcto');
