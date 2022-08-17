@@ -4,3 +4,6 @@ codeception/vendor
 codeception/composer.lock
 php/temps/*
 .DS_store
+
+/vendor/
+composer.lock

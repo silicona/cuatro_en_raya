@@ -1,6 +1,11 @@
 <?php
+
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+
+use CuatroPhp\php\Cuatro;
+
 require_once 'config.php';
-require_once 'cuatro.php';
+//require_once 'cuatro.php';
 
 function limpia_varchar($string){
 

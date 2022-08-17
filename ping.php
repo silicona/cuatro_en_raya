@@ -1,11 +1,9 @@
 <?php
 
-$ch = curl_init();
-curl_setopt($ch, CURLOPT_URL, 'https://apiv2.avirato.com/ping');
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HEADER, 0);
-$data = curl_exec($ch);
-curl_close($ch);
+require_once 'vendor/autoload.php';
+
+use CuatroPhp\php\SocketUser;
+use CuatroPhp\php\Cuatro;
 
 function getUserIpAddress()
 {
@@ -38,17 +36,14 @@ function getUserIpAddress()
   }
 };
 
-$data = json_decode($data, true);
+
+$user = new Cuatro();
+// $user = new SocketUser();
 
 echo json_encode(array(
   'ping' => true,
-  'clientIp' => getUserIpAddress(),
-  'request' => $_REQUEST,
-  'server' => $_SERVER,
-  'api2' => $data,
-  'api2ping' => array(
-    'ping' => $data['ping'],
-    'host' => $data['host'],
-    'ipHost' => $data['x-forwarded-for']
-  )
+  'user' => $user
+  //'clientIp' => getUserIpAddress(),
+  //'request' => $_REQUEST,
+  //'server' => $_SERVER,
 ));

@@ -1,0 +1,15 @@
+{
+    "name": "nadies/cuatro_php",
+    "autoload": {
+        "psr-4": {
+            "CuatroPhp\\": ""
+        }
+    },
+    "authors": [
+        {
+            "name": "silicona",
+            "email": "alejoizquierdomartinez@gmail.com"
+        }
+    ],
+    "require": {}
+}

@@ -13,7 +13,8 @@
         "symfony/cache": "^5.4"
     },
     "autoload": {
-        "psr-0": { "": "tests/_support/_files/doctrine/entities/" }
+        "psr-0": { "": "tests/_support/_files/doctrine/entities/" },
+        "psr-4": { "CuatroPhp\\": ".." }
     },
     "scripts": {
         "test": "php vendor/bin/codecept run",

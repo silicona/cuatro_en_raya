@@ -1,7 +1,10 @@
 <?php
+
+namespace CuatroPhp\php;
+
 // require_once 'config.php';
-require_once 'class.sockeador.php';
-require_once 'class.socketuser.php';
+//require_once 'class.sockeador.php';
+//require_once 'class.socketuser.php';
 
 class Cuatro
 {
@@ -120,7 +123,7 @@ class Cuatro
 			if ($fin_partida && strlen($nombre) > 0) {
 				$this->guardarAmistadBender(trim($nombre), $ganador);
 			}
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			$arr_mensaje = ['EcharFicha: ' . $e];
 		}
 
@@ -169,7 +172,7 @@ class Cuatro
 				$arr_mensaje[] = 'La partida termina en tablas';
 				$this->deleteTempPlay();
 			}
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			$arr_mensaje = ['EcharFicha: ' . $e];
 		}
 
@@ -1031,7 +1034,7 @@ class Cuatro
 		$this->max_tokens = 4;
 		$this->turno_maq = $this->iniciarTurno();
 		$this->dificultad = $dificultad;
-		$this->temp_file = 'play_' . (new DateTime())->format('Uu') . '.txt';
+		$this->temp_file = 'play_' . (new \DateTime())->format('Uu') . '.txt';
 
 		$arr_mensaje = array(
 			"Partida manual",

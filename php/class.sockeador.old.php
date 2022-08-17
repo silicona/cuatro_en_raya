@@ -1,5 +1,7 @@
 <?php
 
+use CuatroPhp\php\Cuatro;
+
 require_once 'class.socketuser.php';
 require_once 'cuatro.php';
 class Sockeador
@@ -163,7 +165,7 @@ class Sockeador
       $this->send_message($response_text, $id_op);
 
       $play->cuatro = new Cuatro();
-      $play->cuatro->temp_file = 'play_' . (new DateTime())->format('Uu') . '.txt';
+      $play->cuatro->temp_file = 'play_' . (new \DateTime())->format('Uu') . '.txt';
       $turno = $id_user;
       $contra = $id_op;
       if ($play->cuatro->iniciarTurno()) {

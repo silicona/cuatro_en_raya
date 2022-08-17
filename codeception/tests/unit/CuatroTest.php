@@ -1,5 +1,6 @@
 <?php
-require_once '../php/cuatro.php';
+
+use CuatroPhp\php\Cuatro;
 
 class CuatroTest extends \Codeception\Test\Unit
 {
@@ -19,12 +20,12 @@ class CuatroTest extends \Codeception\Test\Unit
       [1, 1, 1, 1, 2, 2, '', '', '', '', '', '', 2, '', '', '']
     ];
 
-    $this->cuatro->memory = json_decode(@file_get_contents(MEM_FILE));
+    //$this->cuatro->memory = json_decode(@file_get_contents(MEM_FILE));
 
-    if(!$this->cuatro->memory) {
+    //if(!$this->cuatro->memory) {
       $this->cuatro->memory = [$this->mem_play_v];
       file_put_contents(MEM_FILE, json_encode($this->cuatro->memory));
-    }
+    //}
 
   }
 
@@ -212,7 +213,8 @@ class CuatroTest extends \Codeception\Test\Unit
    */
   public function testIniciarJuegoAprendizaje()
   {
-    $rounds = 5000;
+    $rounds = 10;
+    // $rounds = 5000;
     $res = $this->cuatro->iniciarJuegoAprendizaje($rounds);
     
     $this->tester->seeMyVar($res['mensaje']);

@@ -4,7 +4,8 @@ class InitialAPiCest
 {
   public function _before(ApiTester $I)
   {
-    $this->prefijoApi = 'php/api.php';
+    $this->datos = $I->getDatosTest();
+    $this->prefijoApi = $this->datos['base_url'] . 'php/api.php';
   }
 
   public function postKo(ApiTester $I)
