@@ -39,6 +39,9 @@ class CuatroTest extends \Codeception\Test\Unit
     $this->assertSame(MEM_FILE, $this->tester->params['mem_file'], 'MEM_FILE debería ser correcto');
   }
 
+  /**
+   * group wip
+   */
   public function test_echarFicha_UltimoMovimientoHumano_Tablas()
   {
     $tablero = array_merge(
@@ -47,10 +50,10 @@ class CuatroTest extends \Codeception\Test\Unit
       array('H', 'M', 'H', 'H'),
       array('M', 'H', 'M', 'H'),
     );
-    $res = $this->cuatro->echarFicha($tablero, 1, 0);
+    $res = $this->cuatro->echarFicha($tablero, 1, 0, 'Nombre de test', 'play_test.txt');
 
     // Visible con opcion -vv o --debug
-    // $this->tester->seeMyVar($res);
+    //$this->tester->seeMyVar($res);
     // codecept_debug($res);
 
     $this->assertEquals(16, count($res['tablero']), 'Tablero debería tener 16 elementos');
@@ -110,9 +113,6 @@ class CuatroTest extends \Codeception\Test\Unit
     $this->assertSame(false, $res, "Res debería ser false por no tener lugar");
   }
 
-  /**
-   * group wip
-   */
   public function testElegirColumnaAprendizaje()
   {
     $this->cuatro->tablero = [['M', 'M', null, null], ['H', null, null, null], [null, null, null, null], [null, null, null, null]];
@@ -129,9 +129,6 @@ class CuatroTest extends \Codeception\Test\Unit
     // $this->assertSame(0, $res, "Res debería ser 0 por excep");
   }
 
-  /**
-   * group wip
-   */
   public function testGetLosesByMemory()
   {
     $this->cuatro->tablero = [['M', 'M', null, null], ['H', null, null, null], [null, null, null, null], [null, null, null, null]];
@@ -146,6 +143,26 @@ class CuatroTest extends \Codeception\Test\Unit
     $res = $this->tester->callMethod($this->cuatro, 'getLosesByMemory', []);
 
     $this->assertSame([1], $res, "Res debería ser [1] por siguiente movimiento registrado");
+  }
+
+  public function testGetEstrategiaBorracho_Ok()
+  {
+    $this->cuatro->tablero = [['M', 'M', 'M', null], ['H', 'H', 'H', null], [null, null, null, null], [null, null, null, null]];
+    
+    $res = $this->tester->callMethod($this->cuatro, 'getEstrategiaBorracho', ['M']);
+
+    $this->assertSame(0, $res, "Res debería ser 0 integer por próximo movimiento");
+  }
+
+  public function testGetEstrategiaFiestero_Ok()
+  {
+    $this->cuatro->tablero = [['H', 'M', null, null], ['H', 'M', 'H', null], [null, null, null, null], ['M', 'M', null, null]];
+    
+    $res = $this->tester->callMethod($this->cuatro, 'getEstrategiaBorracho', ['M']);
+
+    $this->assertNotSame(2, $res, "Res no debería ser 2 por movimiento de trampa");
+
+    $this->assertContains($res, [0, 1, 3], "Res debería ser algo de [0, 1, 3] por movimiento de trampa");
   }
 
   public function testGetEstrategiaResacoso_Ok()
@@ -177,16 +194,7 @@ class CuatroTest extends \Codeception\Test\Unit
     $this->assertSame(1, $res, "Res debería ser 1 integer por dificultad 3 - menos movimientos");
   }
 
-  public function testGetEstrategiaResacoso_false()
-  {
-    $this->cuatro->tablero = [['H', null, null, null], ['M', null, null, null], [null, null, null, null], [null, null, null, null]];
-    
-    $res = $this->tester->callMethod($this->cuatro, 'getEstrategiaResacoso', ['M']);
-
-    $this->assertFalse($res, "Res debería ser false por no tener este movimiento");
-  }
-
-  public function testGetEstrategiaResacoso_false_memoria_vacia()
+  public function testGetEstrategiaResacoso_OkMemoriaVacia()
   {
     file_put_contents(MEM_FILE, "");
 
@@ -196,7 +204,7 @@ class CuatroTest extends \Codeception\Test\Unit
     
     $res = $this->tester->callMethod($this->cuatro, 'getEstrategiaResacoso', ['M']);
 
-    $this->assertFalse($res, "Res debería ser false por memoria vacia");
+    $this->assertEquals('integer', gettype($res), "Res debería ser integer por memoria vacia");
   }
 
   /**
@@ -204,7 +212,7 @@ class CuatroTest extends \Codeception\Test\Unit
    */
   public function testIniciarJuegoAprendizaje()
   {
-    $rounds = 3000;
+    $rounds = 5000;
     $res = $this->cuatro->iniciarJuegoAprendizaje($rounds);
     
     $this->tester->seeMyVar($res['mensaje']);

@@ -184,26 +184,25 @@ class Cuatro
 
 	private function elegirColumna()
 	{
-
-		$col_elegida = $this->elegirConEstrategia();
-		//$col_muerte_subita = $this->elegirConTrampa('H');
-		
-		//if($col_trampa !== false && $col_elegida == $col_trampa) $col_elegida = false;
-		//if($col_muerte_subita !== false && $col_elegida == $col_muerte_subita) $col_elegida = false;
-		
-		if($col_elegida === false) {
-			$exceps = [];
-			$col_trampa = $this->elegirConTrampa();
-			if($col_trampa !== false) $exceps[] = $col_trampa;
-
-			$col_elegida = $this->elegirColumnaAleatoria($exceps);
+		$jugador = $this->turno_maq ? "M" : "H";
+		switch ($this->dificultad) {
+			case 1:
+				$fn_estrategia = 'getEstrategiaFiestero';
+				break;
+			case 2:
+			case 3:
+				$fn_estrategia = 'getEstrategiaResacoso';
+				break;
+			default:
+				$fn_estrategia = 'getEstrategiaBorracho';
 		}
-		return $col_elegida;
+
+		return $this->$fn_estrategia($jugador);
 	}
 
 	private function elegirColumnaAleatoria(array $exceps = [])
 	{
-		if(count($exceps) > 3) $exceps = [];
+		if (count($exceps) > 3) $exceps = [];
 
 		$arr_cols = array_diff([0, 1, 2, 3], $exceps);
 		sort($arr_cols);
@@ -223,7 +222,7 @@ class Cuatro
 
 			if (empty($arr_cols)) {
 
-				if(!empty($exceps)) {
+				if (!empty($exceps)) {
 					$arr_cols = $exceps;
 					$exceps = [];
 				} else {
@@ -235,17 +234,16 @@ class Cuatro
 		return $id_col;
 	}
 
-
 	private function elegirColumnaAprendizaje(string $jug = 'H')
 	{
-		$id_col_trampa = $this->elegirConTrampa($jug == 'H' ? 'M' : 'H');
-		if($id_col_trampa !== false) return $id_col_trampa;
-
 		$exceps = $this->getLosesByMemory($jug);
+
+		// $id_col_trampa = $this->elegirConTrampa($jug == 'H' ? 'M' : 'H');
+		// if ($id_col_trampa !== false && !in_array($id_col_trampa, $exceps)) $exceps[] = $id_col_trampa;
 
 		$id_col_a_evitar = $this->getEstrategiaFiestero($jug == 'H' ? 'M' : 'H');
 
-		if($id_col_a_evitar !== false && !in_array($id_col_a_evitar, $exceps)) {
+		if ($id_col_a_evitar !== false && !in_array($id_col_a_evitar, $exceps)) {
 			$exceps[] = $id_col_a_evitar;
 			sort($exceps);
 		}
@@ -299,7 +297,7 @@ class Cuatro
 					return 3;
 				}
 			} else {
-				if($i == 1){
+				if ($i == 1) {
 					if ($this->tablero[0][0] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) {
 						return 1;
 					}
@@ -308,7 +306,7 @@ class Cuatro
 					}
 				}
 
-				if($i == 2){
+				if ($i == 2) {
 					if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && ($this->tablero[2][2] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][3] == $jug) {
 						return 2;
 					}
@@ -317,7 +315,7 @@ class Cuatro
 					}
 				}
 
-				if($i == 3){
+				if ($i == 3) {
 					if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[3][3] == null && $this->tablero[3][$i - 1] == null)) {
 						return 3;
 					}
@@ -326,19 +324,19 @@ class Cuatro
 					}
 				}
 
-				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug	&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] == null)){
+				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug	&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] == null)) {
 					return 3;
 				}
 
-				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][$i] == $jug){
+				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][$i] == $jug) {
 					return 2;
 				}
 
-				if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug){
+				if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) {
 					return 1;
 				}
 
-				if (($this->tablero[0][$i] == $jug && $this->tablero[0][$i - 1] == null) && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug){
+				if (($this->tablero[0][$i] == $jug && $this->tablero[0][$i - 1] == null) && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) {
 					return 0;
 				}
 			}
@@ -392,6 +390,117 @@ class Cuatro
 		return false;
 	}
 
+	private function get3enRaya(string $jug = 'M')
+	{
+		// Diagonal 0/5-10/15
+		if ($this->tablero[0][0] == null  && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug) return 0;
+		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][1] !== null && $this->tablero[2][2] == null) return 2;
+		if ($this->tablero[3][3] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[1][0] !== null && $this->tablero[1][1] == null)) return 1;
+		if (($this->tablero[3][2] != null && $this->tablero[3][3] == null) && $this->tablero[2][2] == $jug && $this->tablero[1][1] == $jug) return 3;
+
+		// Diagonal 3/6-9/12
+		if ($this->tablero[0][3] == null  && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug) return 0;
+		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && $this->tablero[2][0] !== null && $this->tablero[2][1] == null) return 2;
+		if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && ($this->tablero[1][1] !== null && $this->tablero[1][2] == null)) return 1;
+		if ($this->tablero[3][0] == null && $this->tablero[2][1] == $jug && $this->tablero[1][2] == $jug) return 3;
+
+		for ($i = 0; $i < 4; $i++) {
+
+			// Vertical 3
+			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == null) return $i;
+
+			// Horizontal dos a tres: 1-2
+			if ($i == 0) {
+				if ($this->tablero[0][$i] == null && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) return rand(0, 1) ? 0 : 3;
+			} else {
+				if (($this->tablero[0][$i] == null && $this->tablero[0][$i - 1] != null)
+					&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug
+					&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] != null)
+				) return $this->tablero[0][$i - 1] == $jug ? 0 : 3;
+			}
+
+			// Horizontal 3 0->2 - 3->1
+			if ($i == 0) {
+				if ($this->tablero[0][0] == $jug && $this->tablero[1][0] == $jug && $this->tablero[2][0] == null	&& ($this->tablero[3][0] == $jug || $this->tablero[3][0] == null)) return 2;
+
+				if ($this->tablero[3][0] == $jug && $this->tablero[2][0] == $jug && $this->tablero[1][0] == null	&& ($this->tablero[0][0] == $jug || $this->tablero[0][0] == null)) return 1;
+			} else {
+				if (
+					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug
+					&& $this->tablero[2][$i - 1] != null	&& $this->tablero[2][$i] == null
+					&& ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
+				)	return 2;
+
+				if (
+					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug
+					&& $this->tablero[1][$i - 1] != null	&& $this->tablero[1][$i] == null
+					&& ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
+				)	return 1;
+			}
+		}
+
+		return false;
+	}
+
+	private function get4enRaya(string $jug = 'M')
+	{
+		// Diagonal 0-5-10-15
+		if ($this->tablero[0][0] == null && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) return 0;
+		if ($this->tablero[0][0] == $jug && ($this->tablero[1][0] !== null && $this->tablero[1][1] == null) && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) return 1;
+		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && ($this->tablero[2][1] !== null && $this->tablero[2][2] == null) && $this->tablero[3][3] == $jug) return 2;
+		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[3][2] !== null && $this->tablero[3][3] == null)) return 3;
+
+		// Diagonal 3-6-9-12	
+		if (($this->tablero[0][2] != null && $this->tablero[0][3] == null) && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 0;
+		if ($this->tablero[0][3] == $jug && ($this->tablero[1][1] !== null && $this->tablero[1][2] == null) && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 1;
+		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && ($this->tablero[2][0] !== null && $this->tablero[2][1] == null) && $this->tablero[3][0] == $jug) return 2;
+		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == null) return 3;
+
+
+		for ($i = 0; $i < 4; $i++) {
+			// Vertical 4
+			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == $jug && $this->tablero[$i][3] == null) return $i;
+
+			// Horizontal 4 0->3 - 3->0
+			if ($i == 0) {
+				if ($this->tablero[0][$i] == null && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 0;
+				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 1;
+				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == null && $this->tablero[3][$i] == $jug) return 2;
+				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) return 3;
+			} else {
+				if (($this->tablero[0][$i - 1] != null && $this->tablero[0][$i] == null) && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 0;
+				if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i - 1] != null && $this->tablero[1][$i] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 1;
+				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && ($this->tablero[2][$i - 1] != null && $this->tablero[2][$i] == null) && $this->tablero[3][$i] == $jug) return 2;
+				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && ($this->tablero[3][$i - 1] != null && $this->tablero[3][$i] == null)) return 3;
+			}
+		}
+
+		return false;
+	}
+
+	private function get4enRayaTrampa(string $jug = 'M')
+	{
+		// Diagonal
+		if ($this->tablero[0][0] == $jug && ($this->tablero[1][1] == null && $this->tablero[1][0] == null) && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) return 1;
+		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && ($this->tablero[2][2] == null && $this->tablero[2][1] == null) && $this->tablero[3][3] == $jug) return 2;
+		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[3][3] == null && $this->tablero[3][2] == null)) return 3;
+
+		if (($this->tablero[0][3] == null && $this->tablero[0][2] == null) && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 0;
+		if ($this->tablero[0][3] == $jug && ($this->tablero[1][2] == null && $this->tablero[1][1] == null) && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 1;
+		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && ($this->tablero[2][1] == null && $this->tablero[2][2] == null) && $this->tablero[3][0] == $jug) return 2;
+
+		for ($i = 1; $i < 4; $i++) {
+
+			// Horizontales
+			if (($this->tablero[0][$i] == $jug && $this->tablero[0][$i - 1] == null) && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 0;
+			if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 1;
+			if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][$i] == $jug) return 2;
+			if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug	&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] == null)) return 3;
+		}
+
+		return false;
+	}
+
 	public function getBenderFriends()
 	{
 		$datos = json_decode(@file_get_contents(AMIGAS_FILE), true);
@@ -419,111 +528,37 @@ class Cuatro
 
 	private function getEstrategiaBorracho(string $jug)
 	{
-		if ($this->max_tokens > 3) {
-			// Diagonal 0-5-10-15
-			if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && $this->tablero[3][2] !== null && $this->tablero[3][3] == null) {
-				return 3;
-			}
+		$id_col = $this->get4enRaya($jug);
 
-			// Diagonal 12-9-6-3
-			if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && $this->tablero[1][2] == $jug && $this->tablero[0][2] !== null && $this->tablero[0][3] == null) {
-				return 0;
-			}
+		if ($id_col === false) $id_col = $this->get3enRaya($jug);
 
-			for ($i = 0; $i < 4; $i++) {
-				// Vertical 4
-				if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == $jug && $this->tablero[$i][3] == null) {
-					return $i;
-				}
+		if ($id_col === false) $id_col = $this->elegirColumnaAleatoria();
 
-				// Horizontal 4 0->3 - 3->0
-				if ($i == 0) {
-					if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) {
-						return 3;
-					}
-					if ($this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[0][$i] == null) {
-						return 0;
-					}
-				} else {
-					if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i - 1] != null && $this->tablero[3][$i] == null) {
-						return 3;
-					}
-					if ($this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[0][$i - 1] != null && $this->tablero[0][$i] == null) {
-						return 0;
-					}
-				}
-			}
-		}
-		// Diagonal 0-5-10
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][1] !== null && $this->tablero[2][2] == null) {
-			return 2;
-		}
-
-		// Diagonal 12-9-6
-		if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && $this->tablero[1][1] !== null && $this->tablero[1][2] == null) {
-			return 1;
-		}
-
-		for ($i = 0; $i < 4; $i++) {
-			// Vertical 3
-			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == null) {
-				return $i;
-			}
-
-			// Horizontal 3 0->2 - 3->1
-			if ($i == 0) {
-				if (
-					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == null
-					&& ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
-				) {
-					return 2;
-				}
-				if (
-					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i] == null
-					&& ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
-				) {
-					return 1;
-				}
-			} else {
-				if (
-					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i - 1] != null
-					&& $this->tablero[2][$i] == null && ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
-				) {
-					return 2;
-				}
-				if (
-					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[1][$i - 1] != null
-					&& $this->tablero[1][$i] == null && ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
-				) {
-					return 1;
-				}
-			}
-		}
-
-		return false;
+		return $id_col;
 	}
 
 	private function getEstrategiaFiestero(string $jug)
 	{
+		$id_col = $this->get4enRaya($jug);
 
-		for ($i = 0; $i < 4; $i++) {
-
-			// Horizontal dos a tres: 1-2
-			if ($i == 0) {
-				if ($this->tablero[0][$i] == null && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) {
-					return rand(0, 1) ? 0 : 3;
-				}
-			} else {
-				if (($this->tablero[0][$i] == null && $this->tablero[0][$i - 1] != null)
-					&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug
-					&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] != null)
-				) {
-					return $this->tablero[0][$i - 1] == $jug ? 0 : 3;
-				}
-			}
+		if ($id_col === false) {
+			$id_col_trampa = $this->get4enRayaTrampa($jug);
+			if($id_col_trampa !== false) return $this->elegirColumnaAleatoria([$id_col_trampa]);
 		}
 
-		return $this->getEstrategiaBorracho($jug);
+		if ($id_col === false) $id_col = $this->get4enRaya($jug == 'M' ? 'H' : 'M');
+
+		if ($id_col === false) $id_col = $this->get3enRaya($jug);
+
+		if ($id_col === false) {
+			$excep = [];
+			$id_col_mortal = $this->get4enRayaTrampa($jug == 'M' ? 'H' : 'M');
+			if($id_col_mortal !== false) $excep[] = $id_col_mortal;
+
+			$id_col = $this->elegirColumnaAleatoria($excep);
+		}
+
+		return $id_col;
 	}
 
 	private function getEstrategiaResacoso(string $jug)
@@ -535,70 +570,6 @@ class Cuatro
 			$cols = $this->dificultad == 3 ? array_shift($nexts) : array_pop($nexts);
 
 			$id_col = $cols[array_rand($cols)];
-		} else {
-			$id_col = $this->getEstrategiaFiestero($jug);
-		}
-
-		return $id_col;
-	}
-
-	private function getEstrategiaResacosoOld(string $jug)
-	{
-		$id_col = false;
-
-		if ($jug == 'M') {
-			$plays = json_decode(file_get_contents(MEM_FILE));
-			$contra = $jug == 'H' ? 'M' : 'H';
-			$tablero = array_map(function ($cell) use ($jug, $contra) {
-				if ($cell == $contra) $cell = 2;
-				else if ($cell == $jug) $cell = 1;
-				else $cell = '';
-				return $cell;
-			}, array_merge(...$this->tablero));
-
-			$nexts = [];
-			foreach ($plays as $play) {
-				$filt = array_filter($play[0]);
-				$inicio = array_shift($filt) == 1 ? true : false;
-				foreach ($play as $i => $move) {
-
-					// Solo movimientos del oponente
-					if ($inicio && $i % 2 == 0) continue;
-					else if (!$inicio && $i % 2 != 0) continue;
-
-					// tablero actual (sin movimiento) es move
-					if (empty(array_diff_assoc($tablero, $move))) {
-						$id_next = $i + 1; // Proximo movimiento registrado de jug
-						$id_next_op = $i + 2; // Futuro movimiento de contra
-						$id_col_aux = false;
-						foreach ($play[$id_next] as $id_token => $next) {
-							if ($tablero[$id_token] == '' && $next == 1) {
-								$id_col_aux = $this->determinarColumna($id_token);
-								break;
-							}
-						}
-
-						if ($id_col_aux !== false) {
-							$stepsVictory = count($play) - $id_next;
-
-							if (!isset($nexts[$stepsVictory]))	$nexts[$stepsVictory] = [];
-
-							if (!in_array($id_col_aux, $nexts[$stepsVictory]))
-								$nexts[$stepsVictory][] = $id_col_aux;
-						}
-						break;
-					}
-				}
-			}
-
-			if (count($nexts) > 0) {
-				if ($this->dificultad == 3) {
-					$cols = array_shift($nexts);
-				} else {
-					$cols = array_pop($nexts);
-				}
-				$id_col = $cols[array_rand($cols)];
-			}
 		} else {
 			$id_col = $this->getEstrategiaFiestero($jug);
 		}
@@ -626,7 +597,7 @@ class Cuatro
 
 		$plays = $this->memory;
 		// $plays = json_decode(@file_get_contents(MEM_FILE));
-		if($plays){
+		if ($plays) {
 
 			$contra = $jug == 'H' ? 'M' : 'H';
 			$tablero = array_map(function ($cell) use ($jug, $contra) {
@@ -640,11 +611,11 @@ class Cuatro
 				$filt = array_filter($play[0]);
 				$inicio = array_shift($filt) == 1 ? true : false;
 				foreach ($play as $i => $move) {
-					
+
 					// Saltamos movimientos del ganador
 					if ($inicio && $i % 2 != 0) continue;
 					else if (!$inicio && $i % 2 == 0) continue;
-					
+
 					if ($tablero == $move) {
 						$id_next = $i + 1; // Proximo movimiento registrado de jug
 						$id_next_op = $i + 2; // Futuro movimiento de contra
@@ -657,7 +628,7 @@ class Cuatro
 						}
 
 						if ($id_col_aux !== false) {
-							if(in_array($id_col_aux, $exceps) === false) $exceps[] = $id_col_aux;
+							if (in_array($id_col_aux, $exceps) === false) $exceps[] = $id_col_aux;
 						}
 						break;
 					}
@@ -684,7 +655,7 @@ class Cuatro
 				return $cell;
 			}, $last);
 
-			if(!in_array($last, $salida)) $salida[] = $last;
+			if (!in_array($last, $salida)) $salida[] = $last;
 		}
 
 		//$salida = array_filter($salida, function($a, $b) { return $a != $b; });
@@ -946,7 +917,7 @@ class Cuatro
 				$tokenElegido = false;
 				while ($tokenElegido === false) {
 					// $id_col = $this->elegirColumna();
-					if($this->turno_maq) {
+					if ($this->turno_maq) {
 						$id_col = $this->elegirColumna();
 					} else {
 						$id_col = $this->elegirColumnaAprendizaje();
@@ -968,8 +939,7 @@ class Cuatro
 				$ganador == 'H' ? $human++ : $machine++;
 
 				$bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
-				if($bytes) $saved++;
-
+				if ($bytes) $saved++;
 			} else {
 				$draws++;
 			}
@@ -983,7 +953,7 @@ class Cuatro
 		$arr_mensaje[] = "$draws empates insignificantes.";
 
 		$arr_mensaje[] = "** Se han guardado " . $saved . " nuevas partidas **";
-		
+
 		$plays = json_decode(file_get_contents(MEM_FILE));
 		$arr_mensaje[] = "** Hay " . count($plays) . " partidas guardadas **";
 
@@ -1015,7 +985,7 @@ class Cuatro
 
 			$tokenElegido = false;
 			while ($tokenElegido === false) {
-					$id_col = $this->elegirColumna();
+				$id_col = $this->elegirColumna();
 
 				$tokenElegido = $this->anadirTokenAColumna($id_col);
 			}
@@ -1094,14 +1064,15 @@ class Cuatro
 	private function limpiar_tablero()
 	{
 		$this->tablero = [];
-		for($i = 0; $i < 4; $i++) {
+		for ($i = 0; $i < 4; $i++) {
 			$aux = [];
-			for($j = 0; $j < 4; $j++) $aux[] = null;
+			for ($j = 0; $j < 4; $j++) $aux[] = null;
 			$this->tablero[] = $aux;
 		}
 	}
 
-	private function transform_tablero(array $tablero) {
+	private function transform_tablero(array $tablero)
+	{
 		//if()
 	}
 
