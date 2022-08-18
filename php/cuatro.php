@@ -20,8 +20,8 @@ class Cuatro
 
 	public function __construct()
 	{
-		$this->dificultad = 0;
-		$this->max_tokens = 4;
+		//$this->dificultad = 0;
+		//$this->max_tokens = 4;
 		$this->turno_maq = false;
 		$this->tablero = array(
 			array(null, null, null, null),
@@ -29,51 +29,27 @@ class Cuatro
 			array(null, null, null, null),
 			array(null, null, null, null),
 		);
-	}
 
-	private function anadirTokenAColumna($id_columna)
-	{
-		for ($i = 0; $i < $this->max_tokens; $i++) {
-
-			if ($this->tablero[$id_columna][$i] == null) {
-
-				$this->tablero[$id_columna][$i] = $this->turno_maq ? "M" : "H";
-
-				return $this->determinarToken($id_columna, $i);
-			}
-		}
-
-		return false;
-	}
-
-	private function deleteTempPlay()
-	{
-		return unlink(BASE_TEMP . $this->temp_file);
-	}
-
-	private function determinarColumna(int $id_token): int
-	{
-		return ceil(++$id_token / 4) - 1;
-	}
-
-	private function determinarToken(int $id_columna, int $altura): int
-	{
-		$posiciones = array_chunk(range(0, 15), 4);
-		return $posiciones[$id_columna][$altura];
+		$this->mem = new Memory();
+		$this->brain = new Brain();
 	}
 
 	public function echarFicha(array $tablero, int $columna, int $dificultad, string $nombre = '', string $temp_file = '')
 	{
-		$this->tablero = array_chunk($tablero, 4);
-		$this->dificultad = $dificultad;
-		$this->temp_file = $temp_file;
+		//$this->tablero = array_chunk($tablero, 4);
+		$this->brain->setTablero(array_chunk($tablero, 4));
+
+		//$this->dificultad = $dificultad;
+		//$this->temp_file = $temp_file;
 		$this->turno_maq = false;
+		$jugador = 'H';
 		$fin_partida = false;
 		$linea = false;
 		$ganador = '';
 
 		try {
-			$token = $this->anadirTokenAColumna($columna - 1);
+			$token = $this->brain->anadirTokenAColumna($columna - 1, $jugador);
+			// $token = $this->anadirTokenAColumna($columna - 1);
 			if ($token === false) {
 				$arr_mensaje = [
 					'El máximo número de fichas por columna es 4.',
@@ -81,35 +57,40 @@ class Cuatro
 				];
 			} else {
 				$arr_mensaje = ['Has colocado ficha en la columna ' . $columna];
-				$this->guardarMovimiento();
+				$this->mem->guardarMovimiento($this->brain->getTableroMerged(), $temp_file);
+				// $this->guardarMovimiento();
 
-				if ($this->elegirGanador()) {
+				if ($this->brain->elegirGanador($jugador)) {
 					$fin_partida = true;
-					$ganador = 'H';
+					$ganador = $jugador;
 					$arr_mensaje[] = 'Has ganado la partida!!';
 				} else {
 					$this->turno_maq = !$this->turno_maq;
+					$jugador = 'M';
 
-					$col_maquina = $this->elegirColumna();
-					if ($this->anadirTokenAColumna($col_maquina) !== false) {
+					$col_maquina = $this->brain->elegirColumna($jugador, $dificultad);
+					if ($this->brain->anadirTokenAColumna($col_maquina, $jugador) !== false) {
 						$arr_mensaje[] = 'Yo he jugado en la columna ' . ($col_maquina + 1);
-						$this->guardarMovimiento();
+						$this->mem->guardarMovimiento($this->brain->getTableroMerged(), $temp_file);
 
-						if ($this->elegirGanador()) {
+						if ($this->brain->elegirGanador($jugador)) {
 							$fin_partida = true;
-							$ganador = 'M';
+							$ganador = $jugador;
 							$arr_mensaje[] = 'He ganado la partida, biológico!!';
 						}
 					}
 				}
 			}
 
-			$tablero = array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2], $this->tablero[3]);
+			$tablero = $this->brain->getTableroMerged();
+			// $tablero = array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2], $this->tablero[3]);
 			if ($fin_partida) {
-				$linea = $this->getLineaGanadora($tablero);
+				$linea = $this->brain->getLineaGanadora($tablero, $ganador);
 
-				Cuatro::guardarPartida($this->getTempPlay(), $this->turno_maq ? 1 : 0);
-				$this->deleteTempPlay();
+				$this->mem->guardarPartida($this->mem->getTempPlay($temp_file), $ganador == 'M' ? 1 : 0);
+				$this->mem->deleteTempPlay($temp_file);
+				// Cuatro::guardarPartida($this->getTempPlay(), $this->turno_maq ? 1 : 0);
+				// $this->deleteTempPlay();
 				// Cuatro::guardarPartida([], $this->turno_maq ? 1 : 0);
 			}
 
@@ -117,11 +98,11 @@ class Cuatro
 				$fin_partida = true;
 				$arr_mensaje[] = 'No hay más posiciones disponibles.';
 				$arr_mensaje[] = 'La partida termina en tablas';
-				$this->deleteTempPlay();
+				$this->mem->deleteTempPlay($temp_file);
 			}
 
 			if ($fin_partida && strlen($nombre) > 0) {
-				$this->guardarAmistadBender(trim($nombre), $ganador);
+				$this->mem->guardarAmistadBender(trim($nombre), $ganador, $dificultad);
 			}
 		} catch (\Exception $e) {
 			$arr_mensaje = ['EcharFicha: ' . $e];
@@ -132,19 +113,22 @@ class Cuatro
 			'mensaje' => $arr_mensaje,
 			'fin_partida' => $fin_partida,
 			'linea' => $linea,
-			'temp_file' => $this->temp_file
+			'temp_file' => $temp_file
 		);
 	}
 
 	public function echarFichaSocket(array $tablero, int $columna, string $nombre)
 	{
-		$this->tablero = array_chunk($tablero, 4);
-		//$this->turno_maq = false;
+		// $this->tablero = array_chunk($tablero, 4);
+		$this->brain->setTablero(array_chunk($tablero, 4));
+
+		$jugador = $this->turno_maq ? "M" : "H";
+		// //$this->turno_maq = false;
 		$fin_partida = false;
 		$linea = false;
 
 		try {
-			$token = $this->anadirTokenAColumna($columna - 1);
+			$token = $this->brain->anadirTokenAColumna($columna - 1, $jugador);
 			if ($token === false) {
 				$arr_mensaje = [
 					'El máximo número de fichas por columna es 4.',
@@ -153,24 +137,25 @@ class Cuatro
 			} else {
 				$arr_mensaje = [$nombre . ' ha colocado ficha en la columna ' . $columna];
 
-				if ($this->elegirGanador()) {
+				if ($this->brain->elegirGanador($jugador)) {
 					$fin_partida = true;
 					$arr_mensaje[] = $nombre . ' ha ganado la partida!!';
 				}
 			}
 
-			$tablero = array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2], $this->tablero[3]);
+			$tablero = $this->brain->getTableroMerged();
+			// $tablero = array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2], $this->tablero[3]);
 			if ($fin_partida) {
-				$linea = $this->getLineaGanadora($tablero);
-				//Cuatro::guardarPartida($this->getTempPlay(), $this->turno_maq ? 1 : 0);
-				$this->deleteTempPlay();
+				$linea = $this->brain->getLineaGanadora($tablero, $jugador);
+				$this->mem->deleteTempPlay($this->temp_file);
+				// //Cuatro::guardarPartida($this->getTempPlay(), $this->turno_maq ? 1 : 0);
 			}
 
 			if (!$fin_partida && !in_array(null, $tablero)) {
 				$fin_partida = true;
 				$arr_mensaje[] = 'No hay más posiciones disponibles.';
 				$arr_mensaje[] = 'La partida termina en tablas';
-				$this->deleteTempPlay();
+				$this->mem->deleteTempPlay($this->temp_file);
 			}
 		} catch (\Exception $e) {
 			$arr_mensaje = ['EcharFicha: ' . $e];
@@ -185,675 +170,183 @@ class Cuatro
 		);
 	}
 
-	private function elegirColumna()
-	{
-		$jugador = $this->turno_maq ? "M" : "H";
-		switch ($this->dificultad) {
-			case 1:
-				$fn_estrategia = 'getEstrategiaFiestero';
-				break;
-			case 2:
-			case 3:
-				$fn_estrategia = 'getEstrategiaResacoso';
-				break;
-			default:
-				$fn_estrategia = 'getEstrategiaBorracho';
-		}
+	// private function elegirColumnaAprendizaje(string $jug = 'H')
+	// {
+	// 	$exceps = $this->getLosesByMemory($jug);
 
-		return $this->$fn_estrategia($jugador);
-	}
+	// 	// $id_col_trampa = $this->elegirConTrampa($jug == 'H' ? 'M' : 'H');
+	// 	// if ($id_col_trampa !== false && !in_array($id_col_trampa, $exceps)) $exceps[] = $id_col_trampa;
 
-	private function elegirColumnaAleatoria(array $exceps = [])
-	{
-		if (count($exceps) > 3) $exceps = [];
+	// 	$id_col_a_evitar = $this->brain->getEstrategiaFiestero($jug == 'H' ? 'M' : 'H');
 
-		$arr_cols = array_diff([0, 1, 2, 3], $exceps);
-		sort($arr_cols);
+	// 	if ($id_col_a_evitar !== false && !in_array($id_col_a_evitar, $exceps)) {
+	// 		$exceps[] = $id_col_a_evitar;
+	// 		sort($exceps);
+	// 	}
 
-		$id_col = false;
-		while ($id_col === false) {
+	// 	$col_elegida = $this->brain->elegirColumnaAleatoria($exceps);
 
-			$index = rand(0, count($arr_cols) - 1);
-			$aux_id = $arr_cols[$index];
-
-			if (!preg_match('/(M|H)/', strval($this->tablero[$aux_id][$this->max_tokens - 1]))) {
-				$id_col = $aux_id;
-				break;
-			}
-
-			array_splice($arr_cols, $index, 1);
-
-			if (empty($arr_cols)) {
-
-				if (!empty($exceps)) {
-					$arr_cols = $exceps;
-					$exceps = [];
-				} else {
-					break;
-				}
-			}
-		}
-
-		return $id_col;
-	}
-
-	private function elegirColumnaAprendizaje(string $jug = 'H')
-	{
-		$exceps = $this->getLosesByMemory($jug);
-
-		// $id_col_trampa = $this->elegirConTrampa($jug == 'H' ? 'M' : 'H');
-		// if ($id_col_trampa !== false && !in_array($id_col_trampa, $exceps)) $exceps[] = $id_col_trampa;
-
-		$id_col_a_evitar = $this->getEstrategiaFiestero($jug == 'H' ? 'M' : 'H');
-
-		if ($id_col_a_evitar !== false && !in_array($id_col_a_evitar, $exceps)) {
-			$exceps[] = $id_col_a_evitar;
-			sort($exceps);
-		}
-
-		$col_elegida = $this->elegirColumnaAleatoria($exceps);
-
-		return $col_elegida;
-	}
-
-	private function elegirConEstrategia()
-	{
-		$jugador = $this->turno_maq ? "M" : "H";
-		switch ($this->dificultad) {
-			case 1:
-				$fn_estrategia = 'getEstrategiaFiestero';
-				break;
-			case 2:
-			case 3:
-				$fn_estrategia = 'getEstrategiaResacoso';
-				break;
-			default:
-				$fn_estrategia = 'getEstrategiaBorracho';
-		}
-
-		$id_col = $this->$fn_estrategia($jugador);
-		if ($id_col !== false) return $id_col;
-
-		if ($this->max_tokens == 4) return $this->$fn_estrategia($jugador == 'M' ? 'H' : 'M');
-
-		// $col = $this->getColumnaEstrategica($jugador);
-		// if ($this->max_tokens < 4) {
-		// 	return $id_col;
-		// } 
-		// else if ($this->turno_maq) {
-
-		// 	return $this->$fn_estrategia($jugador == 'M' ? 'H' : 'M');
-		// }
-
-		return false;
-	}
-
-	private function elegirConTrampa(string $jug = 'M')
-	{
-		for ($i = 0; $i < 4; $i++) {
-
-			if ($i == 0) {
-				if ($this->tablero[0][$i] == null && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) {
-					return 0;
-				}
-				if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][$i] == null) {
-					return 3;
-				}
-			} else {
-				if ($i == 1) {
-					if ($this->tablero[0][0] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) {
-						return 1;
-					}
-					if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][0] == $jug) {
-						return 2;
-					}
-				}
-
-				if ($i == 2) {
-					if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && ($this->tablero[2][2] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][3] == $jug) {
-						return 2;
-					}
-					if ($this->tablero[0][3] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) {
-						return 1;
-					}
-				}
-
-				if ($i == 3) {
-					if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[3][3] == null && $this->tablero[3][$i - 1] == null)) {
-						return 3;
-					}
-					if (($this->tablero[0][$i] == null && $this->tablero[0][$i - 1] == null) && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) {
-						return 0;
-					}
-				}
-
-				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug	&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] == null)) {
-					return 3;
-				}
-
-				if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][$i] == $jug) {
-					return 2;
-				}
-
-				if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) {
-					return 1;
-				}
-
-				if (($this->tablero[0][$i] == $jug && $this->tablero[0][$i - 1] == null) && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) {
-					return 0;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	private function elegirGanador(): bool
-	{
-		$jug = $this->turno_maq ? "M" : "H";
-
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug &&	$this->tablero[3][3] == $jug) {
-			return true;
-		}
-
-		if ($this->tablero[3][0] == $jug &&	$this->tablero[2][1] == $jug &&	$this->tablero[1][2] == $jug &&	$this->tablero[0][3] == $jug) {
-			return true;
-		}
-
-		for ($i = 0; $i < 4; $i++) {
-			$vertical = $this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug &&	$this->tablero[$i][2] == $jug && $this->tablero[$i][3] == $jug;
-			$horizontal = $this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug &&	$this->tablero[3][$i] == $jug;
-
-			if ($vertical || $horizontal) return true;
-		}
-
-		return false;
-	}
-
-	private function elegirGanadorAutomatico()
-	{
-
-		$jug = $this->turno_maq ? "M" : "H";
-
-		for ($i = 0; $i < 4; $i++) {
-
-			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == $jug) {
-				return $i;
-			}
-		}
-
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug) {
-			return 3;
-		}
-
-		if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && $this->tablero[1][2] == $jug) {
-			return 0;
-		}
-
-		return false;
-	}
-
-	private function get3enRaya(string $jug = 'M')
-	{
-		// Diagonal 0/5-10/15
-		if ($this->tablero[0][0] == null  && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug) return 0;
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][1] !== null && $this->tablero[2][2] == null) return 2;
-		if ($this->tablero[3][3] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[1][0] !== null && $this->tablero[1][1] == null)) return 1;
-		if (($this->tablero[3][2] != null && $this->tablero[3][3] == null) && $this->tablero[2][2] == $jug && $this->tablero[1][1] == $jug) return 3;
-
-		// Diagonal 3/6-9/12
-		if ($this->tablero[0][3] == null  && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug) return 0;
-		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && $this->tablero[2][0] !== null && $this->tablero[2][1] == null) return 2;
-		if ($this->tablero[3][0] == $jug && $this->tablero[2][1] == $jug && ($this->tablero[1][1] !== null && $this->tablero[1][2] == null)) return 1;
-		if ($this->tablero[3][0] == null && $this->tablero[2][1] == $jug && $this->tablero[1][2] == $jug) return 3;
-
-		for ($i = 0; $i < 4; $i++) {
-
-			// Vertical 3
-			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == null) return $i;
-
-			// Horizontal dos a tres: 1-2
-			if ($i == 0) {
-				if ($this->tablero[0][$i] == null && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) return rand(0, 1) ? 0 : 3;
-			} else {
-				if (($this->tablero[0][$i] == null && $this->tablero[0][$i - 1] != null)
-					&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug
-					&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] != null)
-				) return $this->tablero[0][$i - 1] == $jug ? 0 : 3;
-			}
-
-			// Horizontal 3 0->2 - 3->1
-			if ($i == 0) {
-				if ($this->tablero[0][0] == $jug && $this->tablero[1][0] == $jug && $this->tablero[2][0] == null	&& ($this->tablero[3][0] == $jug || $this->tablero[3][0] == null)) return 2;
-
-				if ($this->tablero[3][0] == $jug && $this->tablero[2][0] == $jug && $this->tablero[1][0] == null	&& ($this->tablero[0][0] == $jug || $this->tablero[0][0] == null)) return 1;
-			} else {
-				if (
-					$this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug
-					&& $this->tablero[2][$i - 1] != null	&& $this->tablero[2][$i] == null
-					&& ($this->tablero[3][$i] == $jug || $this->tablero[3][$i] == null)
-				)	return 2;
-
-				if (
-					$this->tablero[3][$i] == $jug && $this->tablero[2][$i] == $jug
-					&& $this->tablero[1][$i - 1] != null	&& $this->tablero[1][$i] == null
-					&& ($this->tablero[0][$i] == $jug || $this->tablero[0][$i] == null)
-				)	return 1;
-			}
-		}
-
-		return false;
-	}
-
-	private function get4enRaya(string $jug = 'M')
-	{
-		// Diagonal 0-5-10-15
-		if ($this->tablero[0][0] == null && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) return 0;
-		if ($this->tablero[0][0] == $jug && ($this->tablero[1][0] !== null && $this->tablero[1][1] == null) && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) return 1;
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && ($this->tablero[2][1] !== null && $this->tablero[2][2] == null) && $this->tablero[3][3] == $jug) return 2;
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[3][2] !== null && $this->tablero[3][3] == null)) return 3;
-
-		// Diagonal 3-6-9-12	
-		if (($this->tablero[0][2] != null && $this->tablero[0][3] == null) && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 0;
-		if ($this->tablero[0][3] == $jug && ($this->tablero[1][1] !== null && $this->tablero[1][2] == null) && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 1;
-		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && ($this->tablero[2][0] !== null && $this->tablero[2][1] == null) && $this->tablero[3][0] == $jug) return 2;
-		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == null) return 3;
-
-
-		for ($i = 0; $i < 4; $i++) {
-			// Vertical 4
-			if ($this->tablero[$i][0] == $jug && $this->tablero[$i][1] == $jug && $this->tablero[$i][2] == $jug && $this->tablero[$i][3] == null) return $i;
-
-			// Horizontal 4 0->3 - 3->0
-			if ($i == 0) {
-				if ($this->tablero[0][$i] == null && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 0;
-				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 1;
-				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == null && $this->tablero[3][$i] == $jug) return 2;
-				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == null) return 3;
-			} else {
-				if (($this->tablero[0][$i - 1] != null && $this->tablero[0][$i] == null) && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 0;
-				if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i - 1] != null && $this->tablero[1][$i] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 1;
-				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && ($this->tablero[2][$i - 1] != null && $this->tablero[2][$i] == null) && $this->tablero[3][$i] == $jug) return 2;
-				if ($this->tablero[0][$i] == $jug && $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug && ($this->tablero[3][$i - 1] != null && $this->tablero[3][$i] == null)) return 3;
-			}
-		}
-
-		return false;
-	}
-
-	private function get4enRayaTrampa(string $jug = 'M')
-	{
-		// Diagonal
-		if ($this->tablero[0][0] == $jug && ($this->tablero[1][1] == null && $this->tablero[1][0] == null) && $this->tablero[2][2] == $jug && $this->tablero[3][3] == $jug) return 1;
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && ($this->tablero[2][2] == null && $this->tablero[2][1] == null) && $this->tablero[3][3] == $jug) return 2;
-		if ($this->tablero[0][0] == $jug && $this->tablero[1][1] == $jug && $this->tablero[2][2] == $jug && ($this->tablero[3][3] == null && $this->tablero[3][2] == null)) return 3;
-
-		if (($this->tablero[0][3] == null && $this->tablero[0][2] == null) && $this->tablero[1][2] == $jug && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 0;
-		if ($this->tablero[0][3] == $jug && ($this->tablero[1][2] == null && $this->tablero[1][1] == null) && $this->tablero[2][1] == $jug && $this->tablero[3][0] == $jug) return 1;
-		if ($this->tablero[0][3] == $jug && $this->tablero[1][2] == $jug && ($this->tablero[2][1] == null && $this->tablero[2][2] == null) && $this->tablero[3][0] == $jug) return 2;
-
-		for ($i = 1; $i < 4; $i++) {
-
-			// Horizontales
-			if (($this->tablero[0][$i] == $jug && $this->tablero[0][$i - 1] == null) && $this->tablero[1][$i] == null && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 0;
-			if ($this->tablero[0][$i] == $jug && ($this->tablero[1][$i] == null && $this->tablero[1][$i - 1] == null) && $this->tablero[2][$i] == $jug && $this->tablero[3][$i] == $jug) return 1;
-			if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && ($this->tablero[2][$i] == null && $this->tablero[2][$i - 1] == null) && $this->tablero[3][$i] == $jug) return 2;
-			if ($this->tablero[0][$i] == $jug	&& $this->tablero[1][$i] == $jug && $this->tablero[2][$i] == $jug	&& ($this->tablero[3][$i] == null && $this->tablero[3][$i - 1] == null)) return 3;
-		}
-
-		return false;
-	}
+	// 	return $col_elegida;
+	// }
 
 	public function getBenderFriends()
 	{
-		$datos = json_decode(@file_get_contents(AMIGAS_FILE), true);
-		$records = [
-			'tops' => [],
-			'records' => [],
-			'error' => false
-		];
-		if ($datos != null) {
-
-			foreach ($datos as $registro) {
-				$amiga = AmigaBender::factory($registro);
-				$top = $amiga->getTopRecord();
-				if (!isset($records['tops'][$top['puntos']])) $records['tops'][$top['puntos']] = [];
-				$records['tops'][$top['puntos']][] = $top;
-				////$records['tops'][] = $amiga->getTopRecord();
-				$records['records'][] = $amiga->toArray();
-			}
-		} else {
-			$records['error'] = true;
-		}
-
-		return $records;
+		return $this->mem->getBenderFriends();
 	}
 
-	private function getEstrategiaBorracho(string $jug)
-	{
-		$id_col = $this->get4enRaya($jug);
+	// private function getEstrategiaResacoso(string $jug)
+	// {
+	// 	$nexts = $this->getNextsByMemory($jug);
 
-		if ($id_col === false) $id_col = $this->get3enRaya($jug);
+	// 	if (count($nexts) > 0) {
 
-		if ($id_col === false) $id_col = $this->elegirColumnaAleatoria();
+	// 		$cols = $this->dificultad == 3 ? array_shift($nexts) : array_pop($nexts);
 
-		return $id_col;
-	}
+	// 		$id_col = $cols[array_rand($cols)];
+	// 	} else {
+	// 		$id_col = $this->brain->getEstrategiaFiestero($jug);
+	// 	}
 
-	private function getEstrategiaFiestero(string $jug)
-	{
-		$id_col = $this->get4enRaya($jug);
+	// 	return $id_col;
+	// }
 
-		if ($id_col === false) {
-			$id_col_trampa = $this->get4enRayaTrampa($jug);
-			if($id_col_trampa !== false) return $this->elegirColumnaAleatoria([$id_col_trampa]);
-		}
+	// private function getLosesByMemory(string $jug = 'H')
+	// {
+	// 	$exceps = [];
 
-		if ($id_col === false) $id_col = $this->get4enRaya($jug == 'M' ? 'H' : 'M');
+	// 	$plays = $this->memory;
+	// 	// $plays = json_decode(@file_get_contents(MEM_FILE));
+	// 	if ($plays) {
 
-		if ($id_col === false) $id_col = $this->get3enRaya($jug);
+	// 		$contra = $jug == 'H' ? 'M' : 'H';
+	// 		$tablero = array_map(function ($cell) use ($jug, $contra) {
+	// 			if ($cell == $contra) $cell = 1;
+	// 			else if ($cell == $jug) $cell = 2;
+	// 			else $cell = '';
+	// 			return $cell;
+	// 		}, array_merge(...$this->tablero));
 
-		if ($id_col === false) {
-			$excep = [];
-			$id_col_mortal = $this->get4enRayaTrampa($jug == 'M' ? 'H' : 'M');
-			if($id_col_mortal !== false) $excep[] = $id_col_mortal;
+	// 		foreach ($plays as $play) {
+	// 			$filt = array_filter($play[0]);
+	// 			$inicio = array_shift($filt) == 1 ? true : false;
+	// 			foreach ($play as $i => $move) {
 
-			$id_col = $this->elegirColumnaAleatoria($excep);
-		}
+	// 				// Saltamos movimientos del ganador
+	// 				if ($inicio && $i % 2 != 0) continue;
+	// 				else if (!$inicio && $i % 2 == 0) continue;
 
-		return $id_col;
-	}
+	// 				if ($tablero == $move) {
+	// 					$id_next = $i + 1; // Proximo movimiento registrado de jug
+	// 					$id_next_op = $i + 2; // Futuro movimiento de contra
+	// 					$id_col_aux = false;
+	// 					foreach ($play[$id_next] as $id_token => $next) {
+	// 						if ($tablero[$id_token] == '' && $next == 2) {
+	// 							$id_col_aux = $this->brain->determinarColumna($id_token);
+	// 							break;
+	// 						}
+	// 					}
 
-	private function getEstrategiaResacoso(string $jug)
-	{
-		$nexts = $this->getNextsByMemory($jug);
+	// 					if ($id_col_aux !== false) {
+	// 						if (in_array($id_col_aux, $exceps) === false) $exceps[] = $id_col_aux;
+	// 					}
+	// 					break;
+	// 				}
+	// 			}
+	// 		}
 
-		if (count($nexts) > 0) {
+	// 		if (count($exceps) > 0) sort($exceps);
+	// 	}
 
-			$cols = $this->dificultad == 3 ? array_shift($nexts) : array_pop($nexts);
-
-			$id_col = $cols[array_rand($cols)];
-		} else {
-			$id_col = $this->getEstrategiaFiestero($jug);
-		}
-
-		return $id_col;
-	}
-
-	private function getLineaGanadora($tablero): array
-	{
-		$jug = $this->turno_maq ? "M" : "H";
-
-		foreach ($this->triunfos as $triunfo) {
-			$ok = true;
-			foreach ($triunfo as $id_token) {
-				if ($tablero[$id_token] != $jug) $ok = false;
-			}
-			if ($ok) return $triunfo;
-		}
-		return false;
-	}
-
-	private function getLosesByMemory(string $jug = 'H')
-	{
-		$exceps = [];
-
-		$plays = $this->memory;
-		// $plays = json_decode(@file_get_contents(MEM_FILE));
-		if ($plays) {
-
-			$contra = $jug == 'H' ? 'M' : 'H';
-			$tablero = array_map(function ($cell) use ($jug, $contra) {
-				if ($cell == $contra) $cell = 1;
-				else if ($cell == $jug) $cell = 2;
-				else $cell = '';
-				return $cell;
-			}, array_merge(...$this->tablero));
-
-			foreach ($plays as $play) {
-				$filt = array_filter($play[0]);
-				$inicio = array_shift($filt) == 1 ? true : false;
-				foreach ($play as $i => $move) {
-
-					// Saltamos movimientos del ganador
-					if ($inicio && $i % 2 != 0) continue;
-					else if (!$inicio && $i % 2 == 0) continue;
-
-					if ($tablero == $move) {
-						$id_next = $i + 1; // Proximo movimiento registrado de jug
-						$id_next_op = $i + 2; // Futuro movimiento de contra
-						$id_col_aux = false;
-						foreach ($play[$id_next] as $id_token => $next) {
-							if ($tablero[$id_token] == '' && $next == 2) {
-								$id_col_aux = $this->determinarColumna($id_token);
-								break;
-							}
-						}
-
-						if ($id_col_aux !== false) {
-							if (in_array($id_col_aux, $exceps) === false) $exceps[] = $id_col_aux;
-						}
-						break;
-					}
-				}
-			}
-
-			if (count($exceps) > 0) sort($exceps);
-		}
-
-		return $exceps;
-	}
+	// 	return $exceps;
+	// }
 
 	public function getKillsByMemory(): array
 	{
-		$memoria = json_decode(@file_get_contents(MEM_FILE));
-		$salida = [];
-		foreach ($memoria as $i => $play) {
-			$last = $play[count($play) - 1];
-
-			$last = array_map(function ($cell) {
-				if ($cell == 1) $cell = 'M';
-				else if ($cell == 2) $cell = 'H';
-				else $cell = null;
-				return $cell;
-			}, $last);
-
-			if (!in_array($last, $salida)) $salida[] = $last;
-		}
-
-		//$salida = array_filter($salida, function($a, $b) { return $a != $b; });
-		return $salida;
+		return $this->mem->getKillsByMemory();
 	}
 
-	private function getNextsByMemory(string $jug)
-	{
-		$nexts = [];
-		$plays = $this->memory;
-		// $plays = json_decode(@file_get_contents(MEM_FILE));
+	// private function getNextsByMemory(string $jug)
+	// {
+	// 	$nexts = [];
+	// 	$plays = $this->memory;
+	// 	// $plays = json_decode(@file_get_contents(MEM_FILE));
 
-		if ($plays) {
-			$contra = $jug == 'M' ? 'H' : 'M';
-			$tablero = array_map(function ($cell) use ($jug, $contra) {
-				if ($cell == $contra) $cell = 2;
-				else if ($cell == $jug) $cell = 1;
-				else $cell = '';
-				return $cell;
-			}, array_merge(...$this->tablero));
+	// 	if ($plays) {
+	// 		$contra = $jug == 'M' ? 'H' : 'M';
+	// 		$tablero = array_map(function ($cell) use ($jug, $contra) {
+	// 			if ($cell == $contra) $cell = 2;
+	// 			else if ($cell == $jug) $cell = 1;
+	// 			else $cell = '';
+	// 			return $cell;
+	// 		}, array_merge(...$this->tablero));
 
-			foreach ($plays as $play) {
-				$filt = array_filter($play[0]);
-				$inicio = array_shift($filt) == 1 ? true : false;
-				foreach ($play as $i => $move) {
+	// 		foreach ($plays as $play) {
+	// 			$filt = array_filter($play[0]);
+	// 			$inicio = array_shift($filt) == 1 ? true : false;
+	// 			foreach ($play as $i => $move) {
 
-					// Saltamos movimientos del oponente
-					if ($inicio && $i % 2 == 0) continue;
-					else if (!$inicio && $i % 2 != 0) continue;
+	// 				// Saltamos movimientos del oponente
+	// 				if ($inicio && $i % 2 == 0) continue;
+	// 				else if (!$inicio && $i % 2 != 0) continue;
 
-					if ($tablero == $move) {
-						$id_next = $i + 1; // Proximo movimiento registrado de jug
-						$id_next_op = $i + 2; // Futuro movimiento de contra
-						$id_col_aux = false;
-						foreach ($play[$id_next] as $id_token => $next) {
-							if ($tablero[$id_token] == '' && $next == 1) {
-								$id_col_aux = $this->determinarColumna($id_token);
-								break;
-							}
-						}
+	// 				if ($tablero == $move) {
+	// 					$id_next = $i + 1; // Proximo movimiento registrado de jug
+	// 					$id_next_op = $i + 2; // Futuro movimiento de contra
+	// 					$id_col_aux = false;
+	// 					foreach ($play[$id_next] as $id_token => $next) {
+	// 						if ($tablero[$id_token] == '' && $next == 1) {
+	// 							$id_col_aux = $this->brain->determinarColumna($id_token);
+	// 							break;
+	// 						}
+	// 					}
 
-						if ($id_col_aux !== false) {
-							$stepsVictory = count($play) - $id_next;
+	// 					if ($id_col_aux !== false) {
+	// 						$stepsVictory = count($play) - $id_next;
 
-							if (!isset($nexts[$stepsVictory]))	$nexts[$stepsVictory] = [];
+	// 						if (!isset($nexts[$stepsVictory]))	$nexts[$stepsVictory] = [];
 
-							if (!in_array($id_col_aux, $nexts[$stepsVictory]))
-								$nexts[$stepsVictory][] = $id_col_aux;
-						}
-						break;
-					}
-				}
-			}
+	// 						if (!in_array($id_col_aux, $nexts[$stepsVictory]))
+	// 							$nexts[$stepsVictory][] = $id_col_aux;
+	// 					}
+	// 					break;
+	// 				}
+	// 			}
+	// 		}
 
-			if (count($nexts) > 0) ksort($nexts);
-		}
+	// 		if (count($nexts) > 0) ksort($nexts);
+	// 	}
 
-		return $nexts;
-	}
-
-	private function getTempPlay()
-	{
-		$datos = json_decode(@file_get_contents(BASE_TEMP . $this->temp_file));
-		if (!$datos) $datos = [];
-
-		return $datos;
-	}
-
-	private function guardarAmistadBender(string $nombre, string $ganador)
-	{
-		$datos = json_decode(@file_get_contents(AMIGAS_FILE), true);
-		$amiga = false;
-		$ind = false;
-		if ($datos != null) {
-
-			foreach ($datos as $i => $registro) {
-				if ($registro['nombre'] == $nombre) {
-					$amiga = AmigaBender::factory($registro);
-					$ind = $i;
-					break;
-				}
-			}
-		} else {
-			$datos = [];
-		}
-
-		if (!$amiga) $amiga = new AmigaBender($nombre);
-
-		$amiga->actualizarNumeros($this->dificultad, $ganador);
-
-		if ($ind !== false) $datos[$ind] = $amiga->toArray();
-		else $datos[] = $amiga->toArray();
-
-		return file_put_contents(AMIGAS_FILE, json_encode($datos));
-	}
-
-	private function guardarMovimiento(): int
-	{
-		$tablero = array_merge(...$this->tablero);
-
-		if (count(array_filter($tablero)) == 1) {
-			file_put_contents(BASE_TEMP . $this->temp_file, '');
-			// file_put_contents(MEM_TEMP_FILE, '');
-			$datos = [];
-		} else {
-			$str_datos = @file_get_contents(BASE_TEMP . $this->temp_file);
-			// $str_datos = @file_get_contents(MEM_TEMP_FILE);
-			$datos = json_decode($str_datos);
-		}
-
-		if (!$datos) $datos = [];
-
-		$datos[] = $tablero;
-
-		return file_put_contents(BASE_TEMP . $this->temp_file, json_encode($datos));
-		// return file_put_contents(MEM_TEMP_FILE, json_encode($datos));
-	}
-
-	public static function guardarPartida(array $partida, int $ind_ganador): int
-	{
-		if ($partida && count($partida) > 0) {
-			$datos = json_decode(@file_get_contents(MEM_FILE));
-			if (!$datos) $datos = [];
-
-			usort($datos, function ($a, $b) {
-				if (count($a) == count($b)) {
-					return 0;
-				}
-
-				return (count($a) < count($b)) ? -1 : 1;
-			});
-
-
-			$ganador = $ind_ganador % 2 == 0 ? 'H' : 'M';
-			$perdedor = $ganador == 'H' ? 'M' : 'H';
-
-			for ($i = 0; $i < count($partida); $i++) {
-				for ($j = 0; $j < count($partida[$i]); $j++) {
-					if ($partida[$i][$j] == $ganador) $partida[$i][$j] = 1;
-					else if ($partida[$i][$j] == $perdedor) $partida[$i][$j] = 2;
-					else $partida[$i][$j] = '';
-				}
-			}
-
-			$repetida = false;
-			foreach ($datos as $play) {
-				if ($play == $partida) {
-					$repetida = true;
-					break;
-				}
-			}
-
-			if (!$repetida) {
-				$datos[] = $partida;
-				return file_put_contents(MEM_FILE, json_encode($datos));
-			}
-		}
-
-		return false;
-	}
+	// 	return $nexts;
+	// }
 
 	public function iniciarJuegoAutomatico()
 	{
-		$this->max_tokens = 3;
+		//$this->max_tokens = 3;
+		$this->brain->setMaxTokens(3);
 		$this->turno_maq = $this->iniciarTurno();
+		$this->brain->setTablero($this->tablero);
 
 		$arr_mensaje = array(
 			"Partida automática",
 			"Yo llevo las amarillas y tu las verdes.",
 			($this->turno_maq ? "El azar ha decidido que empiezo yo." : "El azar quiere que empieces!")
 		);
-
 		$ganador = false;
+		$token = false;
 		for ($i = 0; $i < 12; $i++) {
+			$jugador = $this->turno_maq ? 'M' : 'H';
 
 			$tokenElegido = false;
 			while ($tokenElegido === false) {
-				$id_col = $this->elegirColumna();
-				$tokenElegido = $this->anadirTokenAColumna($id_col);
+				$id_col = $this->brain->getEstrategiaAutomatica($jugador);
+				$tokenElegido = $this->brain->anadirTokenAColumna($id_col, $jugador);
 			}
 
-			if ($this->elegirGanador()) {
-				$ganador = $this->turno_maq ? 'M' : 'H';
+			if ($this->brain->elegirGanador($jugador)) {
+				$ganador = $jugador;
 				break;
 			}
 			$this->turno_maq = !$this->turno_maq;
-		}
-
-		$col_ganadora = $this->elegirGanadorAutomatico();
-
-		if ($col_ganadora !== false) {
-			$this->max_tokens = 4;
-			$token = $this->anadirTokenAColumna($col_ganadora);
-		} else {
-			$token = false;
 		}
 
 		if ($ganador) {
@@ -864,20 +357,34 @@ class Cuatro
 				$arr_mensaje[] = 'La Fortuna lo quiso así.';
 			}
 		} else {
+			$jugador = $this->turno_maq ? 'M' : 'H';
+
+			$col_ganadora = $this->brain->elegirGanadorAutomatico($jugador);
+
+			if ($col_ganadora !== false) {
+				//$this->max_tokens = 4;
+				$this->brain->setMaxTokens(4);
+
+				$token = $this->brain->anadirTokenAColumna($col_ganadora, $jugador);
+			}
+
 			if ($this->turno_maq) {
 				$arr_mensaje[] = "El próximo movimiento es mio.";
-				if ($col_ganadora !== false) {
-					$arr_mensaje[] = "Gano jugando en la columna " . ($col_ganadora + 1);
-				} else {
-					$arr_mensaje[] = "No puedo ganar con mi próximo movimiento.";
-				}
+				$arr_mensaje[] = $token ? "Gano jugando en la columna " . ($col_ganadora + 1) : "No puedo ganar con mi próximo movimiento.";
+				// $arr_mensaje[] = ($col_ganadora !== false) ? "Gano jugando en la columna " . ($col_ganadora + 1) : "No puedo ganar con mi próximo movimiento.";
+				// if ($col_ganadora !== false) {
+				// 	$arr_mensaje[] = "Gano jugando en la columna " . ($col_ganadora + 1);
+				// } else {
+				// 	$arr_mensaje[] = "No puedo ganar con mi próximo movimiento.";
+				// }
 			} else {
 				$arr_mensaje[] = "El próximo movimiento es tuyo!";
-				if ($col_ganadora !== false) {
-					$arr_mensaje[] = "Puedes ganar si juegas en la columna " . ($col_ganadora + 1);
-				} else {
-					$arr_mensaje[] = "No puedes ganar con tu próximo movimiento.";
-				}
+				$arr_mensaje[] = $token ? "Puedes ganar si juegas en la columna " . ($col_ganadora + 1) : "No puedes ganar con tu próximo movimiento.";
+				// if ($col_ganadora !== false) {
+				// 	$arr_mensaje[] = "Puedes ganar si juegas en la columna " . ($col_ganadora + 1);
+				// } else {
+				// 	$arr_mensaje[] = "No puedes ganar con tu próximo movimiento.";
+				// }
 			}
 		}
 
@@ -885,7 +392,8 @@ class Cuatro
 		$arr_mensaje[] = "¿Jugamos otra vez?";
 
 		return array(
-			'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
+			'tablero' => $this->brain->getTableroMerged(),
+			// 'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
 			'mensaje' => $arr_mensaje,
 			'token' => $token
 		);
@@ -893,12 +401,13 @@ class Cuatro
 
 	public function iniciarJuegoAprendizaje(int $rounds = 1)
 	{
-		$this->max_tokens = 4;
-		$this->dificultad = 3;
+		//$this->max_tokens = 4;
+		$dificultad = 3;
 		$this->turno_maq = $this->iniciarTurno();
+		$this->brain->setTablero($this->tablero);
 
 		$arr_mensaje = array(
-			"Partida de aprendizaje - Nivel " . ($this->dificultad === 3 ? "Sobrio" : "irrelevante"),
+			"Partida de aprendizaje - Nivel " . ($dificultad === 3 ? "Sobrio" : "irrelevante"),
 			"Yo llevo las amarillas y tu las verdes, que estás aprendiendo, nudillos de hueso.",
 			"",
 		);
@@ -910,28 +419,32 @@ class Cuatro
 		$total = $rounds;
 		while ($rounds > 0) {
 
-			$this->memory = json_decode(@file_get_contents(MEM_FILE));
-			$this->limpiar_tablero();
+			$this->brain->setMemory($this->mem->getMemory());
+			//$this->memory = $this->mem->getMemory();
+			// $this->memory = json_decode(@file_get_contents(MEM_FILE));
+			$this->brain->limpiar_tablero();
 
 			$ganador = false;
 			$partida = [];
-			for ($i = 0; $i < ($this->max_tokens * 4); $i++) {
-
+			for ($i = 0; $i < 16; $i++) {
+				$jugador = $this->turno_maq ? 'M' : 'H';
 				$tokenElegido = false;
 				while ($tokenElegido === false) {
-					// $id_col = $this->elegirColumna();
-					if ($this->turno_maq) {
-						$id_col = $this->elegirColumna();
-					} else {
-						$id_col = $this->elegirColumnaAprendizaje();
-					}
-					$tokenElegido = $this->anadirTokenAColumna($id_col);
+					// if ($this->turno_maq) {
+					// 	$id_col = $this->brain->elegirColumna();
+					// } else {
+					// 	$id_col = $this->elegirColumnaAprendizaje();
+					// }
+					$id_col = $jugador == 'M' ? $this->brain->elegirColumna($jugador, $dificultad) : $this->brain->elegirColumnaAprendizaje($jugador);
+					$tokenElegido = $this->brain->anadirTokenAColumna($id_col, $jugador);
 				}
 
-				$partida[] = array_merge(...$this->tablero);
+				$partida[] = $this->brain->getTableroMerged();
+				// $partida[] = array_merge(...$this->tablero);
 
-				if ($this->elegirGanador()) {
-					$ganador = $this->turno_maq ? 'M' : 'H';
+				if ($this->brain->elegirGanador($jugador)) {
+					$ganador = $jugador;
+					// $ganador = $this->turno_maq ? 'M' : 'H';
 					break;
 				}
 				$this->turno_maq = !$this->turno_maq;
@@ -940,8 +453,8 @@ class Cuatro
 			if ($ganador !== false) {
 
 				$ganador == 'H' ? $human++ : $machine++;
-
-				$bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
+				$bytes = $this->mem->guardarPartida($partida, $ganador);
+				// $bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
 				if ($bytes) $saved++;
 			} else {
 				$draws++;
@@ -957,60 +470,66 @@ class Cuatro
 
 		$arr_mensaje[] = "** Se han guardado " . $saved . " nuevas partidas **";
 
-		$plays = json_decode(file_get_contents(MEM_FILE));
+		$plays = $this->mem->getMemory();
+		// $plays = json_decode(file_get_contents(MEM_FILE));
 		$arr_mensaje[] = "** Hay " . count($plays) . " partidas guardadas **";
 
 		$arr_mensaje[] = "";
 		$arr_mensaje[] = "¿Le damos caña otra vez?";
 
 		return array(
-			'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
+			'tablero' => $this->brain->getTableroMerged(),
+			// 'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
 			'mensaje' => $arr_mensaje,
 		);
 	}
 
 	public function iniciarJuegoSolitario()
 	{
-		$this->max_tokens = 4;
-		$this->dificultad = 3;
+		//$this->max_tokens = 4;
+		$dificultad = 3;
+		$this->brain->setMemory($this->mem->getMemory());
+		$this->brain->setTablero($this->tablero);
 		$this->turno_maq = $this->iniciarTurno();
 
 		$arr_mensaje = array(
 			// "Partida en solitario - Nivel Borracho",
-			"Partida en solitario - Nivel " . ($this->dificultad === 3 ? "Sobrio" : "irrelevante"),
+			"Partida en solitario - Nivel " . ($dificultad === 3 ? "Sobrio" : "irrelevante"),
 			"Yo llevo las amarillas y tu las verdes.",
 			($this->turno_maq ? "El azar ha decidido que empiezo yo." : "El azar quiere que empieces!")
 		);
 
 		$ganador = false;
 		$partida = [];
-		for ($i = 0; $i < ($this->max_tokens * 4); $i++) {
-
+		for ($i = 0; $i < 16; $i++) {
+			$jugador = $this->turno_maq ? 'M' : 'H';
 			$tokenElegido = false;
 			while ($tokenElegido === false) {
-				$id_col = $this->elegirColumna();
+				$id_col = $this->brain->elegirColumna($jugador, $dificultad);
 
-				$tokenElegido = $this->anadirTokenAColumna($id_col);
+				$tokenElegido = $this->brain->anadirTokenAColumna($id_col, $jugador);
 			}
-			$partida[] = array_merge(...$this->tablero);
+			$partida[] = $this->brain->getTableroMerged();
+			// $partida[] = array_merge(...$this->tablero);
 
-			if ($this->elegirGanador()) {
-				$ganador = $this->turno_maq ? 'M' : 'H';
+			if ($this->brain->elegirGanador($jugador)) {
+				$ganador = $jugador;
 				break;
 			}
 			$this->turno_maq = !$this->turno_maq;
 		}
 
 		if ($ganador) {
-			$ind = 1;
-			if ($ganador == 'H') {
-				$arr_mensaje[] = 'Los Hados quisieron que ganarás, biológico.';
-				$ind = 2;
-			} else {
-				$arr_mensaje[] = 'He ganado. La Fortuna lo quiso así.';
-			}
 
-			$bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
+			// if ($ganador == 'H') {
+			// 	$arr_mensaje[] = 'Los Hados quisieron que ganarás, biológico.';
+			// } else {
+			// 	$arr_mensaje[] = 'He ganado. La Fortuna lo quiso así.';
+			// }
+
+			$bytes = $this->mem->guardarPartida($partida, $ganador);
+			$arr_mensaje[] = $ganador == 'H' ? 'Los Hados quisieron que ganarás, biológico.' : 'He ganado. La Fortuna lo quiso así.';
+			// $bytes = Cuatro::guardarPartida($partida, $ganador == 'M' ? 1 : 2);
 
 			$arr_mensaje[] = "Guardados $bytes bytes";
 		} else {
@@ -1024,17 +543,20 @@ class Cuatro
 		$arr_mensaje[] = "¿Jugamos otra vez?";
 
 		return array(
-			'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
+			'tablero' => $this->brain->getTableroMerged(),
+			// 'tablero' => array_merge($this->tablero[0], $this->tablero[1], $this->tablero[2],	$this->tablero[3]),
 			'mensaje' => $arr_mensaje,
 		);
 	}
 
 	public function iniciarPartida(int $dificultad)
 	{
-		$this->max_tokens = 4;
+		//$this->max_tokens = 4;
 		$this->turno_maq = $this->iniciarTurno();
-		$this->dificultad = $dificultad;
-		$this->temp_file = 'play_' . (new \DateTime())->format('Uu') . '.txt';
+		$this->brain->setTablero($this->tablero);
+
+		//$this->dificultad = $dificultad;
+		$temp_file = 'play_' . (new \DateTime())->format('Uu') . '.txt';
 
 		$arr_mensaje = array(
 			"Partida manual",
@@ -1042,55 +564,29 @@ class Cuatro
 		);
 
 		if ($this->turno_maq) {
-			$col_maquina = $this->elegirColumna();
-			$this->anadirTokenAColumna($col_maquina);
+			if ($dificultad > 1) $this->brain->setMemory($this->mem->getMemory());
+
+			$col_maquina = $this->brain->elegirColumna('M', $dificultad);
+			$this->brain->anadirTokenAColumna($col_maquina, 'M');
+
 			$arr_mensaje[] = "El azar ha decidido que empiezo yo.";
 			$arr_mensaje[] = 'He jugado en la columna ' . ($col_maquina + 1);
-			$this->guardarMovimiento();
+			$this->mem->guardarMovimiento($this->brain->getTableroMerged(), $temp_file);
 		} else {
 			$arr_mensaje[] = "El azar quiere que empieces!";
 			$arr_mensaje[] = "Elige una columna";
 		}
 
 		return array(
-			'tablero' => array_merge($this->tablero[0],	$this->tablero[1], $this->tablero[2],	$this->tablero[3]),
+			'tablero' => $this->brain->getTableroMerged(),
+			// 'tablero' => array_merge($this->tablero[0],	$this->tablero[1], $this->tablero[2],	$this->tablero[3]),
 			'mensaje' => $arr_mensaje,
-			'temp_file' => $this->temp_file
+			'temp_file' => $temp_file
 		);
 	}
 
 	public function iniciarTurno(): bool
 	{
 		return rand() % 2 == 0;
-	}
-
-	private function limpiar_tablero()
-	{
-		$this->tablero = [];
-		for ($i = 0; $i < 4; $i++) {
-			$aux = [];
-			for ($j = 0; $j < 4; $j++) $aux[] = null;
-			$this->tablero[] = $aux;
-		}
-	}
-
-	private function transform_tablero(array $tablero)
-	{
-		//if()
-	}
-
-	private function ordenarArrayPorElementos($array, $orden = "asc")
-	{
-		usort($array, function ($a, $b) use ($orden) {
-			if (count($a) == count($b)) {
-				return 0;
-			}
-			if ($orden != "asc") {
-
-				return (count($a) > count($b)) ? -1 : 1;
-			}
-
-			return (count($a) < count($b)) ? -1 : 1;
-		});
 	}
 }

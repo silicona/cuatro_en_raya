@@ -22,19 +22,24 @@ $cuatro = new Cuatro();
 
 if($accion == "juego_automatico"){
 
+	// echo json_encode([$accion]);
 	echo json_encode($cuatro -> iniciarJuegoAutomatico());
+	exit;
+}
+
+if($accion == "juego_aprendizaje"){
+
+	$num_rounds = intVal($_POST['num_rounds']);
+
+	if(!$num_rounds) $num_rounds = 1;
+
+	echo json_encode($cuatro -> iniciarJuegoAprendizaje($num_rounds));
 	exit;
 }
 
 if($accion == "juego_solitario"){
 
-	$num_rounds = intVal($_POST['num_rounds']);
-	//echo json_encode(['num' => $num_rounds]);
-	//exit;
-	if(!$num_rounds) $num_rounds = 1;
-
-	echo json_encode($cuatro -> iniciarJuegoAprendizaje($num_rounds));
-	// echo json_encode($cuatro -> iniciarJuegoSolitario());
+	echo json_encode($cuatro -> iniciarJuegoSolitario());
 	exit;
 }
 

@@ -23,6 +23,7 @@
         "test:steps": "php vendor/bin/codecept gherkin:steps selenium",
         "test:verbose": "php vendor/bin/codecept run -vv",
         "test:d": "php vendor/bin/codecept run --debug",
+        "test:api": "php vendor/bin/codecept run api",
         "test:api:d": "php vendor/bin/codecept run api -g wip --debug",
         "test:bbdd": "php vendor/bin/codecept run bbdd",
         "test:bbdd:d": "php vendor/bin/codecept run bbdd --debug",
