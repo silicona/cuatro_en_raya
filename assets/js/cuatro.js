@@ -12,6 +12,7 @@ var Cuatro = {
 	niveles: ['Borracho', 'Fiestero', 'Resacoso', 'Sobrio'],
 	temp_file: 'def',
 	memoria: [],
+	onfire: false,
 
 	actualizar_comunidad_users: function (type, user) {
 		if (type == 'add') {
@@ -49,6 +50,15 @@ var Cuatro = {
 		$('#rotulo').html(mensaje);
 	},
 
+	actualizar_resp: function (contenido) {
+		if(contenido.indexOf('<p') !== 0) contenido = '<p>' + contenido + '</p>';
+
+		$('#resp')
+		.append(contenido)
+		.scrollTop($('#resp').prop('scrollHeight'))
+		.show();
+	},
+
 	actualizar_tablero: function (json) {
 		try {
 			if (json != '') {
@@ -60,6 +70,9 @@ var Cuatro = {
 					Cuatro.rellenar_tablero(datos.tablero);
 
 					var mensaje = $('<p>', { html: datos.mensaje.join('<br>') })
+					
+					Cuatro.habilitar_onfire(false);
+					// Cuatro.onfire = false;
 
 					if (Cuatro.automatico) {
 
@@ -139,6 +152,10 @@ var Cuatro = {
 
 	echar_ficha: function (event) {
 
+		if(Cuatro.onfire) return;
+
+		Cuatro.habilitar_onfire();
+
 		var tablero = []
 		$('.token').map(function (i, item) {
 			var match = /(M|H)/.exec(item.className)
@@ -149,6 +166,7 @@ var Cuatro = {
 		var ajax = $.ajax({
 			type: "POST",
 			url: "php/api.php",
+			start_time: new Date().getTime(),
 			data: {
 				accion: "echar_ficha",
 				tablero: tablero,
@@ -160,20 +178,34 @@ var Cuatro = {
 		});
 
 		ajax.done(Cuatro.actualizar_tablero)
+		ajax.fail(Cuatro.ajax_catch)
+	},
+
+	ajax_catch: function(xhr, status, error) {
+		
+		var mensaje = 'Hay un error interno del servidor, cima de la evolución'
+
+		if(this.start_time && (new Date().getTime() - this.start_time) > 30000){
+
+			mensaje = "Parece que he roto tu servidor, simio dominante<br>Inténtalo de nuevo"
+		}
+
+		Cuatro.habilitar_onfire(false)
+		
+		Cuatro.actualizar_resp(mensaje)
 	},
 
 	getBenderFriends: function () {
 		$('#amigas-error').empty();
 
-		var ajax = $.ajax({
+		$.ajax({
 			type: "POST",
 			url: "php/api.php",
 			data: {
 				accion: "get_bender_friends"
 			}
-		});
-
-		ajax.done(function (json) {
+		})
+		.done(function (json) {
 			try {
 				if (json != '') {
 					var datos = $.parseJSON(json);
@@ -235,7 +267,8 @@ var Cuatro = {
 			} catch (error) {
 				$('#amigas-error').html($('<p>', { html: 'Parece que no tengo amigas debido a: ' + error }));
 			}
-		});
+		})
+		.fail(Cuatro.ajax_catch)
 	},
 
 	habilitarAmigasRecords: function (event) {
@@ -313,6 +346,17 @@ var Cuatro = {
 			$('#logged-color').css('background-color: #FFFFFF');
 			Cuatro.union = false;
 			//$('#resp').html('Error al conectarse con la comunidad de Cuatro En Raya')
+		}
+	},
+
+	habilitar_onfire: function (active = true) {
+
+		Cuatro.onfire = active;
+
+		if(active){
+			$('#resp').append('<p class="onfire-mensaje">** Pensando... **</p>');
+		} else {
+			$('.onfire-mensaje').remove();
 		}
 	},
 
@@ -402,13 +446,17 @@ var Cuatro = {
 		var ajax = $.ajax({
 			type: "POST",
 			url: "php/api.php",
+			start_time: new Date().getTime(),
 			data: {
-				accion: "juego_solitario",
-				num_rounds: 10
+				accion: "juego_aprendizaje",
+				// accion: "juego_solitario",
+				num_rounds: 150,
 			}
 		});
 
 		ajax.done(Cuatro.actualizar_tablero);
+
+		ajax.fail(Cuatro.ajax_catch);
 
 		Cuatro.actualizar_rotulo('Lonely play');
 	},

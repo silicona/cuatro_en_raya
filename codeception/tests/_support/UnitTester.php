@@ -30,4 +30,5 @@ class UnitTester extends \Codeception\Actor
     
         $this->params = \Codeception\Configuration::suiteSettings("unit", \Codeception\Configuration::config())['params'];
     }
+    
 }

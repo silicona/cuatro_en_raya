@@ -10,14 +10,14 @@ class JuegoCest
   }
 
   /**
-   * @group wip
+   * group wip
    */
   public function postJuegoAutomatico(ApiTester $I)
   {
     $I->sendPost($this->url_api, ['accion' => 'juego_automatico']);
 
     $res = json_decode($I->grabResponse());
-    $I->printVar($res);
+    //$I->printVar($res);
     
     $I->seeResponseCodeIsSuccessful();
     $I->seeResponseIsJson();

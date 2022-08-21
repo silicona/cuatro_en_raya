@@ -9,7 +9,8 @@ require_once 'config.php';
 
 function limpia_varchar($string){
 
-	return filter_var($string, FILTER_SANITIZE_STRING);
+	return htmlspecialchars($string);
+	// return filter_var($string, FILTER_SANITIZE_STRING);
 }
 
 function isId(int $number){
@@ -22,7 +23,6 @@ $cuatro = new Cuatro();
 
 if($accion == "juego_automatico"){
 
-	// echo json_encode([$accion]);
 	echo json_encode($cuatro -> iniciarJuegoAutomatico());
 	exit;
 }
@@ -45,9 +45,7 @@ if($accion == "juego_solitario"){
 
 if($accion == "jugar_partida"){
 
-	//$dificultad = $_POST['dificultad'];
 	echo json_encode($cuatro -> iniciarPartida($_POST['dificultad']));
-	
 	exit;
 }
 

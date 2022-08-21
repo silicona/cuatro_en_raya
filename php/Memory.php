@@ -11,7 +11,7 @@ class Memory {
 
   public function getBenderFriends()
 	{
-		$datos = json_decode(@file_get_contents(AMIGAS_FILE), true);
+		$datos = json_decode(file_get_contents(AMIGAS_FILE), true);
 		$records = [
 			'tops' => [],
 			'records' => [],
@@ -33,57 +33,6 @@ class Memory {
 
 		return $records;
 	}
-  /*
-  private function getLosesByMemory(string $jug = 'H')
-	{
-		$exceps = [];
-
-		$plays = $this->memory;
-		// $plays = json_decode(@file_get_contents(MEM_FILE));
-		if ($plays) {
-
-			$contra = $jug == 'H' ? 'M' : 'H';
-			$tablero = array_map(function ($cell) use ($jug, $contra) {
-				if ($cell == $contra) $cell = 1;
-				else if ($cell == $jug) $cell = 2;
-				else $cell = '';
-				return $cell;
-			}, array_merge(...$this->tablero));
-
-			foreach ($plays as $play) {
-				$filt = array_filter($play[0]);
-				$inicio = array_shift($filt) == 1 ? true : false;
-				foreach ($play as $i => $move) {
-
-					// Saltamos movimientos del ganador
-					if ($inicio && $i % 2 != 0) continue;
-					else if (!$inicio && $i % 2 == 0) continue;
-
-					if ($tablero == $move) {
-						$id_next = $i + 1; // Proximo movimiento registrado de jug
-						$id_next_op = $i + 2; // Futuro movimiento de contra
-						$id_col_aux = false;
-						foreach ($play[$id_next] as $id_token => $next) {
-							if ($tablero[$id_token] == '' && $next == 2) {
-								$id_col_aux = $this->determinarColumna($id_token);
-								break;
-							}
-						}
-
-						if ($id_col_aux !== false) {
-							if (in_array($id_col_aux, $exceps) === false) $exceps[] = $id_col_aux;
-						}
-						break;
-					}
-				}
-			}
-
-			if (count($exceps) > 0) sort($exceps);
-		}
-
-		return $exceps;
-	}
-  */
 
 	public function getKillsByMemory(): array
 	{
@@ -114,7 +63,6 @@ class Memory {
 
     return $datos;
   }
-
 
 	public function getTempPlay(string $temp_file)
 	{
@@ -154,15 +102,11 @@ class Memory {
 
 	public function guardarMovimiento(array $tablero, string $temp_file): int
 	{
-		//$tablero = array_merge(...$this->tablero);
-
 		if (count(array_filter($tablero)) == 1) {
 			file_put_contents(BASE_TEMP . $temp_file, '');
-			// file_put_contents(MEM_TEMP_FILE, '');
 			$datos = [];
 		} else {
 			$str_datos = @file_get_contents(BASE_TEMP . $temp_file);
-			// $str_datos = @file_get_contents(MEM_TEMP_FILE);
 			$datos = json_decode($str_datos);
 		}
 
@@ -174,7 +118,6 @@ class Memory {
 	}
 
 	public function guardarPartida(array $partida, string $ganador = 'M'): int
-	// public function guardarPartida(array $partida, int $ind_ganador): int
 	{
     $perdedor = $ganador == 'M' ? 'H' : 'M';
 
@@ -187,9 +130,6 @@ class Memory {
 				
         return (count($a) < count($b)) ? -1 : 1;
 			});
-
-			// $ganador = $ind_ganador % 2 == 0 ? 'H' : 'M';
-			// $perdedor = $ganador == 'H' ? 'M' : 'H';
 
 			for ($i = 0; $i < count($partida); $i++) {
 				for ($j = 0; $j < count($partida[$i]); $j++) {
